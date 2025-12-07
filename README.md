@@ -70,35 +70,22 @@ You can set a fixed password or open network in the config if needed, but the de
 
 ## Usage
 
-### Command Line
+After installation, both the hotspot and web dashboard run automatically as systemd services.
+
+### Systemd Services
 
 ```bash
-# Start hotspot with daily random character
-sudo hotspotchi start
+# Check status
+sudo systemctl status hotspotchi
 
-# Start with specific character (fixed mode)
-sudo hotspotchi start --mac-mode fixed --character-index 5
+# View logs
+journalctl -u hotspotchi -f
 
-# Start with special SSID character
-sudo hotspotchi start --ssid-mode special --special-index 0
-
-# Interactive menu
-sudo hotspotchi interactive
-
-# List all characters
-hotspotchi list-characters
-
-# List special SSIDs
-hotspotchi list-ssids
+# Restart after config changes
+sudo systemctl restart hotspotchi
 ```
 
 ### Web Dashboard
-
-Start the web server:
-
-```bash
-hotspotchi-web --port 8080
-```
 
 Access at `http://raspberrypi.local:8080` (or your Pi's IP address).
 
@@ -120,20 +107,22 @@ Want to keep the "discovery" aspect of Tama Search? You can exclude specific cha
 - Use the filter dropdown to view "Excluded Only" or "Available Only"
 - Click "Include All" to reset all exclusions
 
-### As a Service
+### Command Line (Optional)
+
+For troubleshooting or manual control:
 
 ```bash
-# Start services
-sudo systemctl start hotspotchi hotspotchi-web
+# List all characters
+hotspotchi list-characters
 
-# Enable at boot
-sudo systemctl enable hotspotchi hotspotchi-web
+# List special SSIDs
+hotspotchi list-ssids
 
-# Check status
-sudo systemctl status hotspotchi
+# Interactive menu
+sudo hotspotchi interactive
 
-# View logs
-journalctl -u hotspotchi -f
+# Manual start (not needed if using systemd)
+sudo hotspotchi start
 ```
 
 ## Configuration

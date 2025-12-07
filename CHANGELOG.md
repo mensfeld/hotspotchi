@@ -6,7 +6,7 @@
 - [Docs] Simplify README - remove unnecessary sections, explain daily_random behavior
 - [Docs] Update character count to ~90 (69 MAC + 21 special SSIDs)
 - [Cleanup] Remove unused environment variable documentation and code comments
-- [Maintenance] Add comprehensive tests for CLI commands and hotspot manager (83% total coverage)
+- [Maintenance] Add comprehensive tests for CLI, hotspot manager, and web routes (89% total coverage)
 
 ## 2.2.6 (2025-12-07)
 
