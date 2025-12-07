@@ -53,7 +53,6 @@ class HotSpotchiConfig(BaseModel):
     """Main configuration for HotSpotchi.
 
     All settings have sensible defaults for typical Raspberry Pi use.
-    Configuration can be loaded from environment variables with HOTSPOTCHI_ prefix.
     """
 
     # Network interface

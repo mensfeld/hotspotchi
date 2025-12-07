@@ -14,7 +14,7 @@ The problem? You'd need to physically visit different locations with different W
 
 **HotSpotchi solves this** by turning your Raspberry Pi into a WiFi hotspot that can spoof any MAC address or SSID, letting you:
 
-- Meet all 69+ characters from home without traveling
+- Meet all ~90 characters from home without traveling
 - Access event-exclusive characters (like Sanrio collaborations) that require specific SSIDs
 - Automatically rotate through characters daily, or cycle through the entire collection
 - Track which characters you've encountered via the web dashboard
@@ -26,7 +26,7 @@ Perfect for completionists, rural players without access to many WiFi networks, 
 - **69 MAC-based characters** - Meet different Tamagotchi characters by changing the WiFi MAC address (includes seasonal characters)
 - **21 special SSID characters** - Access event-exclusive characters with special network names
 - **Multiple rotation modes**:
-  - `daily_random` - Different character each day (from all 69), same all day (default)
+  - `daily_random` - Different character each day, same all day (default)
   - `random` - New random character each boot
   - `cycle` - Progress through all characters in order
   - `fixed` - Always show a specific character
@@ -34,9 +34,17 @@ Perfect for completionists, rural players without access to many WiFi networks, 
 - **Web dashboard** - Monitor and control via browser
 - **Raspberry Pi optimized** - Works with hostapd + dnsmasq
 
-## Quick Start
+### How Daily Random Works
 
-### Installation (Raspberry Pi)
+The `daily_random` mode uses a date-based seed to select a character. This means:
+- **Same character all day** - The same character is selected throughout the entire day
+- **Changes at midnight** - A new character is selected when the date changes
+- **Deterministic** - If you restart the service, you'll get the same character for that day
+- **Pool of ~90** - By default, both MAC-based (69) and special SSID characters (21) are included in the rotation
+
+This design ensures a consistent experience throughout the day while still providing variety over time.
+
+## Quick Start
 
 ```bash
 # Clone the repository
@@ -47,50 +55,18 @@ cd hotspotchi
 sudo bash scripts/install.sh
 ```
 
-### Manual Installation
+The installer will set up everything automatically, including systemd services for auto-start.
 
-```bash
-# Install system dependencies
-sudo apt install hostapd dnsmasq python3-pip python3-venv
+## Security
 
-# Install HotSpotchi
-pip install hotspotchi
+**HotSpotchi requires root privileges** to manage network interfaces and system services.
 
-# Or with web dashboard
-pip install "hotspotchi[web]"
-```
+The WiFi network is secured by default:
+- A random 16-character password is generated daily
+- Tamagotchi only needs to *detect* the network name, not connect to it
+- The password prevents random devices from joining your hotspot
 
-## Security Considerations
-
-**HotSpotchi requires root/sudo privileges** to manage network interfaces, MAC addresses, and system services. Before running, please be aware:
-
-- **Review the code** - This software modifies network settings. Always review code from any source before running with elevated privileges.
-- **Dedicated device recommended** - Use a dedicated Raspberry Pi for HotSpotchi rather than a device with sensitive data.
-- **Network isolation** - The hotspot created is a separate network. Consider your network topology and who can connect.
-- **No warranty** - This software is provided "as is" without warranty. Use at your own risk.
-- **Web dashboard access** - If running the web interface, it binds to `0.0.0.0` by default (accessible from your network). Restrict access if needed or bind to `127.0.0.1` for local-only access.
-
-### WiFi Network Security
-
-The HotSpotchi hotspot is **secured by default with WPA2** to prevent unwanted connections:
-
-- **Daily rotating password** - By default, a random 16-character alphanumeric password is generated each day. The password changes at midnight, similar to how daily character selection works.
-- **No connection required** - Tamagotchi Uni only needs to *detect* the network name (SSID), not actually connect to it. The password exists solely to prevent random devices from joining your hotspot.
-- **Password options in config**:
-  - `wifi_password: null` - Daily rotating random password (default, recommended)
-  - `wifi_password: "YourPassword"` - Use a fixed password of your choice
-  - `wifi_password: ""` - Open network with no password (not recommended)
-
-```yaml
-# /etc/hotspotchi/config.yaml
-# Default: null (generates random daily password)
-wifi_password: null
-```
-
-If you're uncomfortable running third-party code as root, you can:
-1. Review all source code in `src/hotspotchi/`
-2. Run in a virtual machine or container first
-3. Use a freshly imaged SD card dedicated to this purpose
+You can set a fixed password or open network in the config if needed, but the default is recommended.
 
 ## Usage
 
@@ -114,12 +90,6 @@ hotspotchi list-characters
 
 # List special SSIDs
 hotspotchi list-ssids
-
-# Check system status
-hotspotchi status
-
-# Verify dependencies
-hotspotchi check
 ```
 
 ### Web Dashboard
@@ -127,10 +97,6 @@ hotspotchi check
 Start the web server:
 
 ```bash
-# Start web dashboard
-hotspotchi-web
-
-# Or with custom port
 hotspotchi-web --port 8080
 ```
 
@@ -140,7 +106,6 @@ The dashboard shows:
 - Current SSID and MAC address
 - Active character name
 - Countdown to next character (daily mode)
-- Upcoming characters (cycle mode)
 - Searchable character browser
 - Special SSID selector
 - Character exclusion controls
@@ -155,19 +120,11 @@ Want to keep the "discovery" aspect of Tama Search? You can exclude specific cha
 - Use the filter dropdown to view "Excluded Only" or "Available Only"
 - Click "Include All" to reset all exclusions
 
-**Notes:**
-- Exclusions are stored in `/var/lib/hotspotchi/exclusions.json`
-- Fixed mode ignores exclusions (you explicitly chose that character)
-- If all characters are excluded, the system falls back to using all characters
-
 ### As a Service
 
 ```bash
-# Start hotspot service
-sudo systemctl start hotspotchi
-
-# Start web dashboard service
-sudo systemctl start hotspotchi-web
+# Start services
+sudo systemctl start hotspotchi hotspotchi-web
 
 # Enable at boot
 sudo systemctl enable hotspotchi hotspotchi-web
@@ -198,30 +155,18 @@ default_ssid: HotSpotchi
 # MAC mode: daily_random, random, cycle, fixed, or disabled
 mac_mode: daily_random
 
+# Include special SSID characters in random rotation (default: true)
+include_special_ssids: true
+
 # For fixed mode - character index (0 = Mametchi)
 fixed_character_index: 0
 
 # For special mode - SSID index (0 = Angel & Devil)
 special_ssid_index: 0
 
-# WPA2 password (default: null = daily rotating random password)
-# Tamagotchi only needs to detect the network, not connect
-# Options: null (daily random), "YourPassword" (fixed), "" (open - not recommended)
-wifi_password: null
-
 # Web server settings
 web_host: "0.0.0.0"
 web_port: 8080
-```
-
-### Environment Variables
-
-All settings can be overridden with `HOTSPOTCHI_` prefix:
-
-```bash
-export HOTSPOTCHI_MAC_MODE=daily_random
-export HOTSPOTCHI_SSID_MODE=normal
-export HOTSPOTCHI_WIFI_INTERFACE=wlan0
 ```
 
 ## How It Works
@@ -255,19 +200,6 @@ Some characters are triggered by specific WiFi network names (SSIDs) that were o
 - **1123 Mametchi** - 28th Anniversary event
 - And more! Run `hotspotchi list-ssids` for the full list.
 
-## Character Reference
-
-### MAC Characters (80+)
-
-| Index | Character | MAC Ending |
-|-------|-----------|------------|
-| 0 | Mametchi | 00:00 |
-| 1 | Weeptchi | 00:10 |
-| 2 | Hypertchi | 00:20 |
-| ... | ... | ... |
-
-Run `hotspotchi list-characters` for the complete list.
-
 ### Seasonal Characters
 
 Set your Tamagotchi's date to meet seasonal characters:
@@ -279,171 +211,35 @@ Set your Tamagotchi's date to meet seasonal characters:
 | Fall | Sep-Nov | Momijitchi, Chestnut Angel, Ginkgotchi, Kinokotchi |
 | Winter | Dec-Feb | Yukinkotchi, Snowboytchi, Fuyukotchi, Yuki Onna |
 
-## Development
-
-```bash
-# Clone and install in development mode
-git clone https://github.com/mensfeld/hotspotchi.git
-cd hotspotchi
-pip install -e ".[dev]"
-
-# Run tests
-pytest
-
-# Run tests with coverage
-pytest --cov=hotspotchi --cov-report=term-missing
-
-# Run linter
-ruff check src/ tests/
-
-# Run formatter
-ruff format src/ tests/
-
-# Type checking
-mypy src/hotspotchi
-```
-
-## Contributing
-
-Contributions are welcome! Please:
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Make your changes
-4. Run tests (`pytest`)
-5. Run linter (`ruff check .`)
-6. Commit your changes (`git commit -m 'Add amazing feature'`)
-7. Push to the branch (`git push origin feature/amazing-feature`)
-8. Open a Pull Request
-
-### Adding New Characters
-
-Characters are stored in `src/hotspotchi/data/characters.yaml` for easy editing.
-
-**To add a MAC-based character:**
-
-```yaml
-# Add to the 'characters' section
-- byte1: 0x04        # First byte (0-255, hex or decimal)
-  byte2: 0x00        # Second byte
-  name: NewCharacter
-  season: spring     # Optional: spring, summer, fall, winter
-```
-
-**To add a special SSID character:**
-
-```yaml
-# Add to the 'special_ssids' section
-- ssid: YourSSIDString32CharsLong1234567
-  character_name: Character Name
-  notes: Where this SSID was discovered
-  active: true       # Set to false if no longer working
-```
-
-After editing, restart HotSpotchi to load the new characters.
-
-**To contribute new characters:**
-
-1. Edit `src/hotspotchi/data/characters.yaml`
-2. Run tests (`pytest`)
-3. Submit a pull request with source/verification info
-
 ## Troubleshooting
 
-### Raspberry Pi becomes unreachable / hangs after starting hotspot
+### Raspberry Pi becomes unreachable after starting hotspot
 
-**This is expected behavior.** When HotSpotchi starts the WiFi hotspot, it takes over the `wlan0` interface. If your Pi was connected to your home WiFi via `wlan0`, it will disconnect from the router and you'll lose SSH access.
+**This is expected behavior.** When HotSpotchi starts the WiFi hotspot, it takes over the `wlan0` interface. If your Pi was connected to your home WiFi via `wlan0`, it will disconnect.
 
 **Solutions:**
 
-1. **Use Ethernet for management** (recommended):
-   - Connect your Pi via Ethernet cable before starting the hotspot
-   - The web dashboard and SSH will remain accessible via Ethernet
-   - The WiFi interface will be used exclusively for the Tamagotchi hotspot
+1. **Use Ethernet for management** (recommended) - Connect your Pi via Ethernet cable before starting the hotspot
 
-2. **Use a second WiFi adapter**:
-   - Add a USB WiFi adapter (wlan1) for your home network
-   - Configure HotSpotchi to use wlan0 for the hotspot
-   - Keep wlan1 connected to your router for management
+2. **Enable concurrent mode** (Pi 3B+/4/5) - Run hotspot while staying connected to your home WiFi:
+   ```yaml
+   # /etc/hotspotchi/config.yaml
+   concurrent_mode: true
+   ```
 
-3. **Physical access only**:
-   - Connect a keyboard and monitor directly to the Pi
-   - Manage HotSpotchi locally without network access
-
-**To recover a "stuck" Pi:**
-
-```bash
-# If Pi appears hung, it's likely just unreachable via WiFi
-# Connect via Ethernet or direct console access, then:
-sudo systemctl stop hotspotchi
-sudo systemctl disable hotspotchi
-
-# Restore normal WiFi:
-sudo nmcli device wifi connect "YourNetworkSSID" password "YourPassword"
-# Or reboot the Pi
-sudo reboot
-```
-
-### Concurrent Mode (Recommended for Pi 3B+/4/5)
-
-If you have a Raspberry Pi 3B+, 4, or 5, you can enable **concurrent mode** to run the hotspot while staying connected to your home WiFi. This way you keep SSH access and internet connectivity.
-
-**Enable during installation:**
-The installer will detect if your Pi supports concurrent mode and offer to enable it.
-
-**Enable manually:**
-```yaml
-# /etc/hotspotchi/config.yaml
-concurrent_mode: true
-```
-
-**How it works:**
-- Creates a virtual AP interface (uap0) from your WiFi chip
-- Main interface (wlan0) stays connected to your router
-- Both interfaces share the same WiFi channel
-- The Tamagotchi hotspot runs on the virtual interface
-
-**Limitations:**
-- Both networks must use the same WiFi channel (handled automatically)
-- Some performance reduction due to channel sharing
-- May not work on all WiFi chipsets
-
-**Check if your Pi supports it:**
-```bash
-iw phy phy0 info | grep -A 10 "valid interface combinations"
-# Look for lines showing "AP" and "managed" together
-```
+3. **Use a second WiFi adapter** - Add a USB WiFi adapter for your home network
 
 ### WiFi not appearing
 
 ```bash
-# Check if hostapd is running
+# Check service status
 sudo systemctl status hotspotchi
 
 # Check for errors
 journalctl -u hotspotchi -n 50
 
-# Verify interface
-ip link show wlan0
-
 # Unblock WiFi if blocked
 sudo rfkill unblock wifi
-```
-
-### Same character every day
-
-Make sure you're using `daily_random` mode:
-
-```bash
-sudo hotspotchi start --mac-mode daily_random
-```
-
-### Permission denied
-
-HotSpotchi requires root privileges for network configuration:
-
-```bash
-sudo hotspotchi start
 ```
 
 ## Updating
@@ -451,40 +247,46 @@ sudo hotspotchi start
 To update HotSpotchi to the latest version:
 
 ```bash
-# Navigate to your HotSpotchi directory
 cd ~/hotspotchi
+sudo bash scripts/upgrade.sh
+```
 
-# Stop the running services
+Or manually:
+
+```bash
+cd ~/hotspotchi
 sudo systemctl stop hotspotchi hotspotchi-web
-
-# Pull the latest changes
 git pull origin master
-
-# Reinstall the package using the venv pip
 sudo /opt/hotspotchi/venv/bin/pip install -e ".[all]" --upgrade
-
-# Restart services
 sudo systemctl start hotspotchi hotspotchi-web
-```
-
-If you installed via the install script, you can also re-run it:
-
-```bash
-sudo bash scripts/install.sh
-```
-
-To check for available updates without applying them:
-
-```bash
-cd ~/hotspotchi
-git fetch origin
-git log HEAD..origin/master --oneline
 ```
 
 ## Uninstallation
 
 ```bash
 sudo bash scripts/uninstall.sh
+```
+
+## Contributing
+
+Contributions are welcome! Characters are stored in `src/hotspotchi/data/characters.yaml` for easy editing.
+
+**To add a MAC-based character:**
+
+```yaml
+- byte1: 0x04
+  byte2: 0x00
+  name: NewCharacter
+  season: spring  # Optional
+```
+
+**To add a special SSID character:**
+
+```yaml
+- ssid: YourSSIDString32CharsLong1234567
+  character_name: Character Name
+  notes: Where this SSID was discovered
+  active: true
 ```
 
 ## License

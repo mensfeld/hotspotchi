@@ -1,5 +1,12 @@
 # HotSpotchi Changelog
 
+## 2.2.7 (2025-12-07)
+
+- [Feature] Add upgrade script (`scripts/upgrade.sh`) for easy updates
+- [Docs] Simplify README - remove unnecessary sections, explain daily_random behavior
+- [Docs] Update character count to ~90 (69 MAC + 21 special SSIDs)
+- [Cleanup] Remove unused environment variable documentation and code comments
+
 ## 2.2.6 (2025-12-07)
 
 - [Feature] Add `/api/debug` endpoint with comprehensive troubleshooting info (config, processes, network, services)
