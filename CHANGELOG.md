@@ -1,8 +1,13 @@
 # HotSpotchi Changelog
 
+## 2.2.5 (2025-12-07)
+
+- [Fix] Fix web UI character selection - now restarts via systemd service to avoid process conflicts
+- [Fix] Web UI saves config to file before restart so CLI picks up new settings
+- [Fix] Only kill hotspotchi-specific dnsmasq processes, not system DNS
+
 ## 2.2.4 (2025-12-07)
 
-- [Fix] Fix web UI restart not working - web and CLI run in separate processes, now kills system-wide hostapd/dnsmasq
 - [Fix] Fix concurrent mode on 5GHz networks - auto-detect hw_mode (a/g) from channel
 - [Fix] Fix virtual interface cleanup - now removes interface regardless of which process created it
 - [Fix] Fix hostapd error message capture (outputs to stdout, not stderr)

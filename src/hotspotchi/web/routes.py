@@ -46,6 +46,47 @@ def _get_hotspot_manager() -> HotspotManager:
     return _hotspot_manager
 
 
+def _restart_via_systemd() -> bool:
+    """Restart hotspot via systemd service if it's running.
+
+    Returns:
+        True if restarted via systemd, False if service not active
+    """
+    import subprocess
+
+    # Check if systemd service is active
+    result = subprocess.run(
+        ["systemctl", "is-active", "hotspotchi"],
+        capture_output=True,
+        text=True,
+    )
+    if result.returncode != 0:
+        return False
+
+    # Save current config to file so CLI picks it up
+    _save_current_config()
+
+    # Restart the systemd service
+    subprocess.run(["systemctl", "restart", "hotspotchi"], check=False)
+    return True
+
+
+def _save_current_config() -> None:
+    """Save current config to the config file."""
+    import yaml
+
+    config_path = Path("/etc/hotspotchi/config.yaml")
+    config_data = _current_config.model_dump()
+
+    # Convert enums to strings
+    for key, value in config_data.items():
+        if hasattr(value, "value"):
+            config_data[key] = value.value
+
+    with open(config_path, "w") as f:
+        yaml.safe_dump(config_data, f, default_flow_style=False)
+
+
 def _is_root() -> bool:
     """Check if running with root privileges."""
     return os.geteuid() == 0
@@ -364,10 +405,14 @@ async def set_character(index: int, apply: bool = False) -> dict:
     applied = False
 
     if apply and _is_root():
-        manager = _get_hotspot_manager()
-        if manager.is_running():
-            manager.restart(_current_config)
+        # Try systemd first, fall back to direct restart
+        if _restart_via_systemd():
             applied = True
+        else:
+            manager = _get_hotspot_manager()
+            if manager.is_running():
+                manager.restart(_current_config)
+                applied = True
 
     return {
         "status": "ok",
@@ -402,10 +447,14 @@ async def set_ssid(index: int, apply: bool = False) -> dict:
     applied = False
 
     if apply and _is_root():
-        manager = _get_hotspot_manager()
-        if manager.is_running():
-            manager.restart(_current_config)
+        # Try systemd first, fall back to direct restart
+        if _restart_via_systemd():
             applied = True
+        else:
+            manager = _get_hotspot_manager()
+            if manager.is_running():
+                manager.restart(_current_config)
+                applied = True
 
     return {
         "status": "ok",
@@ -467,6 +516,13 @@ async def restart_hotspot() -> dict:
             status_code=403,
             detail="Must run as root to control hotspot. Use: sudo hotspotchi-web",
         )
+
+    # Try systemd first, fall back to direct restart
+    if _restart_via_systemd():
+        return {
+            "status": "ok",
+            "message": "Hotspot restarted via systemd",
+        }
 
     manager = _get_hotspot_manager()
 
