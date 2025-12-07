@@ -165,8 +165,11 @@ default_ssid: HotSpotchi
 # MAC mode: daily_random, random, cycle, fixed, or disabled
 mac_mode: daily_random
 
-# Leave empty for open network, or set 8+ char password
-wifi_password: ""
+# WiFi password (WPA2)
+# null = daily rotating random password (default, recommended)
+# "YourPassword" = fixed password (8+ characters)
+# "" = open network (not recommended)
+wifi_password: null
 
 # Web server settings
 web_host: "0.0.0.0"
