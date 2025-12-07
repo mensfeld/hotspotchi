@@ -1,5 +1,12 @@
 # HotSpotchi Changelog
 
+## 2.2.3 (2025-12-07)
+
+- [Fix] Fix web server not loading `web_host` and `web_port` from config file
+- [Fix] Sync `__version__` in `__init__.py` with `pyproject.toml`
+- [Maintenance] Add comprehensive tests for config loading across all modules (14 new tests)
+- [Maintenance] Complete audit of all config usage to ensure consistent loading from `/etc/hotspotchi/config.yaml`
+
 ## 2.2.2 (2025-12-07)
 
 - [Fix] Fix CLI `status` command not loading config from file - now respects user config settings

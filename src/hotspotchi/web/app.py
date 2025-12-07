@@ -10,7 +10,11 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 from hotspotchi import __version__
+from hotspotchi.config import HotSpotchiConfig, load_config
 from hotspotchi.web.routes import router
+
+# Default config file location
+DEFAULT_CONFIG_PATH = Path("/etc/hotspotchi/config.yaml")
 
 # Paths
 WEB_DIR = Path(__file__).parent
@@ -53,25 +57,37 @@ async def health() -> dict:
     return {"status": "ok", "version": __version__}
 
 
+def _load_server_config() -> HotSpotchiConfig:
+    """Load config from file or use defaults."""
+    if DEFAULT_CONFIG_PATH.exists():
+        return load_config(DEFAULT_CONFIG_PATH)
+    return HotSpotchiConfig()
+
+
 def run_server(
-    host: str = "0.0.0.0",
-    port: int = 8080,
+    host: str | None = None,
+    port: int | None = None,
     reload: bool = False,
 ) -> None:
     """Run the web server.
 
     Args:
-        host: Host to bind to
-        port: Port to listen on
+        host: Host to bind to (default: from config or 0.0.0.0)
+        port: Port to listen on (default: from config or 8080)
         reload: Enable auto-reload for development
     """
     import uvicorn
 
-    print(f"Starting HotSpotchi Web Dashboard on http://{host}:{port}")
+    # Load config from file for defaults
+    config = _load_server_config()
+    effective_host = host if host is not None else config.web_host
+    effective_port = port if port is not None else config.web_port
+
+    print(f"Starting HotSpotchi Web Dashboard on http://{effective_host}:{effective_port}")
     uvicorn.run(
         "hotspotchi.web.app:app",
-        host=host,
-        port=port,
+        host=effective_host,
+        port=effective_port,
         reload=reload,
     )
 
