@@ -1,10 +1,8 @@
 """Tests for config loading across the application."""
 
-import tempfile
 from pathlib import Path
 from unittest.mock import patch
 
-import pytest
 import yaml
 
 from hotspotchi.config import HotSpotchiConfig, MacMode, SsidMode, load_config
@@ -191,7 +189,7 @@ class TestCLIConfigLoading:
         with open(config_path, "w") as f:
             yaml.safe_dump({"concurrent_mode": True, "mac_mode": "cycle"}, f)
 
-        from hotspotchi.cli import _load_base_config, DEFAULT_CONFIG_PATH
+        from hotspotchi.cli import _load_base_config
 
         with patch("hotspotchi.cli.DEFAULT_CONFIG_PATH", config_path):
             config = _load_base_config()
