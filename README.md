@@ -6,6 +6,21 @@
 
 Create WiFi access points with custom MAC addresses and SSIDs for meeting characters in Tamagotchi Uni's **Tama Search** feature.
 
+## Why HotSpotchi?
+
+The Tamagotchi Uni's **Tama Search** feature lets you meet special characters by detecting nearby WiFi networks. The character you encounter depends on the last two bytes of the WiFi access point's MAC address, or in some cases, specific SSIDs for event-exclusive characters.
+
+The problem? You'd need to physically visit different locations with different WiFi networks to collect all characters - or wait for special real-world events that may never happen in your area.
+
+**HotSpotchi solves this** by turning your Raspberry Pi into a WiFi hotspot that can spoof any MAC address or SSID, letting you:
+
+- Meet all 69+ characters from home without traveling
+- Access event-exclusive characters (like Sanrio collaborations) that require specific SSIDs
+- Automatically rotate through characters daily, or cycle through the entire collection
+- Track which characters you've encountered via the web dashboard
+
+Perfect for completionists, rural players without access to many WiFi networks, or anyone who just wants to meet their favorite Tamagotchi characters without leaving the house.
+
 ## Features
 
 - **69 MAC-based characters** - Meet different Tamagotchi characters by changing the WiFi MAC address (includes seasonal characters)
