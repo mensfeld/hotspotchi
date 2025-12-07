@@ -1,0 +1,56 @@
+# HotSpotchi Changelog
+
+## 2.2.0 (Unreleased)
+
+- [Feature] Add special SSID exclusion support to web UI with search, filtering, and toggle controls
+- [Feature] Add API endpoints for SSID exclusion management (`/api/ssids/{index}/exclude`, `/api/ssids/{index}/include`, `/api/ssids/{index}/toggle-exclusion`)
+- [Feature] Add `GET /api/ssid-exclusions` endpoint to view SSID exclusion summary
+- [Feature] Add `DELETE /api/ssid-exclusions` endpoint to clear all SSID exclusions
+- [Feature] Add `DELETE /api/all-exclusions` endpoint to clear both character and SSID exclusions
+- [Enhancement] Update `/api/ssids` endpoint with `available_only` and `excluded_only` filter parameters
+- [Enhancement] Include `excluded` field in SSID API responses
+- [Fix] Fix web UI status page showing wrong SSID when special SSID is selected via combined rotation
+- [Fix] Fix mypy type errors in cli.py and hotspot.py
+- [Maintenance] Update CI workflow to install `[all]` dependencies for complete test coverage
+- [Maintenance] Add comprehensive tests for SSID exclusion API endpoints
+
+## 2.1.0 (2025-12-07)
+
+- [Feature] Add special SSIDs to random rotation pool - special SSID characters now appear alongside MAC characters in daily_random, random, and cycle modes
+- [Feature] Add `include_special_ssids` config option (default: true) to control special SSID inclusion in rotation
+- [Feature] Add SSID exclusion support - exclude specific special SSIDs from rotation
+- [Fix] Fix `is_running()` to detect system-wide hostapd processes, not just those started by HotSpotchi
+
+## 2.0.3 (2025-12-07)
+
+- [Feature] Add character exclusion feature - exclude specific characters from random rotation
+- [Feature] Add character exclusion UI in web dashboard with toggle buttons and "Include All" reset
+- [Enhancement] Add available/excluded character counts in web dashboard
+- [Enhancement] Add WiFi interface availability warnings when interface is in use
+- [Fix] Fix CLI to properly load config file for `concurrent_mode` setting
+- [Docs] Add character exclusions documentation to README
+
+## 2.0.2 (2025-12-07)
+
+- [Feature] Add concurrent mode for running hotspot without losing WiFi station connection
+- [Enhancement] Add `concurrent_mode` config option for virtual AP interface creation
+- [Enhancement] Add `ap_interface` config option to specify virtual AP interface name
+
+## 2.0.1 (2025-12-07)
+
+- [Fix] Fix default config to use daily random password (null) instead of fixed password
+- [Enhancement] Extract characters data to external YAML config file for easier maintenance
+- [Docs] Add update instructions to README
+
+## 2.0.0 (2025-12-07)
+
+- [Feature] Initial public release of HotSpotchi
+- [Feature] Support for 69 MAC-based Tamagotchi characters
+- [Feature] Support for 21 special SSID characters (Sanrio, events, etc.)
+- [Feature] Multiple rotation modes: daily_random, random, cycle, fixed, disabled
+- [Feature] Web dashboard with DaisyUI interface for monitoring and control
+- [Feature] Hotspot control via web interface (start/stop/restart)
+- [Feature] Daily rotating WiFi password for security
+- [Feature] Raspberry Pi optimized with hostapd + dnsmasq integration
+- [Security] Add WPA2 password protection by default
+- [Docs] Comprehensive README with security considerations
