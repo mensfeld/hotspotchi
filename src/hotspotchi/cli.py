@@ -136,14 +136,25 @@ def start(
 
 
 @main.command()
-@click.option("--mac-mode", default="daily_random", help="MAC mode to preview")
-@click.option("--character-index", type=int, default=0, help="Fixed character index")
-def status(mac_mode: str, character_index: int) -> None:
+@click.option("--mac-mode", default=None, help="MAC mode to preview (default: from config)")
+@click.option("--character-index", type=int, default=None, help="Fixed character index")
+def status(mac_mode: Optional[str], character_index: Optional[int]) -> None:
     """Show current/preview character selection."""
-    config = HotSpotchiConfig(
-        mac_mode=MacMode(mac_mode),
-        fixed_character_index=character_index,
-    )
+    # Load config from file first
+    if DEFAULT_CONFIG_PATH.exists():
+        config = load_config(DEFAULT_CONFIG_PATH)
+    else:
+        config = HotSpotchiConfig()
+
+    # Apply overrides if provided
+    overrides: dict[str, object] = {}
+    if mac_mode is not None:
+        overrides["mac_mode"] = MacMode(mac_mode)
+    if character_index is not None:
+        overrides["fixed_character_index"] = character_index
+
+    if overrides:
+        config = HotSpotchiConfig(**{**config.model_dump(), **overrides})
 
     character = select_character(config)
     ssid, special_char = resolve_ssid(config)
@@ -220,6 +231,19 @@ def list_ssids(active: bool) -> None:
         click.echo(f"     Notes: {ssid.notes}")
 
 
+def _load_base_config() -> HotSpotchiConfig:
+    """Load base config from file or use defaults."""
+    if DEFAULT_CONFIG_PATH.exists():
+        return load_config(DEFAULT_CONFIG_PATH)
+    return HotSpotchiConfig()
+
+
+def _config_with_overrides(**overrides: object) -> HotSpotchiConfig:
+    """Load config from file and apply overrides."""
+    base = _load_base_config()
+    return HotSpotchiConfig(**{**base.model_dump(), **overrides})
+
+
 @main.command()
 def interactive() -> None:
     """Run interactive character selection menu."""
@@ -247,7 +271,7 @@ def interactive() -> None:
             ctx.invoke(list_ssids, active=False)
 
         elif choice == "3":
-            config = HotSpotchiConfig(mac_mode=MacMode.RANDOM)
+            config = _config_with_overrides(mac_mode=MacMode.RANDOM)
             run_hotspot(config)
 
         elif choice == "4":
@@ -256,7 +280,7 @@ def interactive() -> None:
             try:
                 idx = click.prompt("Enter character number", type=int)
                 if 0 <= idx < len(CHARACTERS):
-                    config = HotSpotchiConfig(
+                    config = _config_with_overrides(
                         mac_mode=MacMode.FIXED,
                         fixed_character_index=idx,
                     )
@@ -272,7 +296,7 @@ def interactive() -> None:
             try:
                 idx = click.prompt("Enter SSID number", type=int)
                 if 0 <= idx < len(SPECIAL_SSIDS):
-                    config = HotSpotchiConfig(
+                    config = _config_with_overrides(
                         ssid_mode=SsidMode.SPECIAL,
                         special_ssid_index=idx,
                     )
@@ -285,7 +309,7 @@ def interactive() -> None:
         elif choice == "6":
             ssid = click.prompt("Enter custom SSID", type=str).strip()
             if ssid:
-                config = HotSpotchiConfig(
+                config = _config_with_overrides(
                     ssid_mode=SsidMode.CUSTOM,
                     custom_ssid=ssid,
                 )
@@ -300,8 +324,17 @@ def interactive() -> None:
 @main.command()
 def check() -> None:
     """Check system requirements."""
-    manager = HotspotManager(HotSpotchiConfig())
+    # Load config from file if it exists
+    if DEFAULT_CONFIG_PATH.exists():
+        config = load_config(DEFAULT_CONFIG_PATH)
+        click.echo(f"Loaded config from {DEFAULT_CONFIG_PATH}")
+    else:
+        config = HotSpotchiConfig()
+        click.echo("Using default config (no config file found)")
 
+    manager = HotspotManager(config)
+
+    click.echo()
     click.echo("HotSpotchi System Check")
     click.echo("=" * 40)
 
@@ -320,11 +353,17 @@ def check() -> None:
         click.echo("[OK] All dependencies installed")
 
     # Check WiFi interface
-    interface = HotSpotchiConfig().wifi_interface
+    interface = config.wifi_interface
     if Path(f"/sys/class/net/{interface}").exists():
         click.echo(f"[OK] Interface {interface} exists")
     else:
         click.echo(f"[!!] Interface {interface} not found")
+
+    # Show concurrent mode status
+    if config.concurrent_mode:
+        click.echo(f"[--] Concurrent mode: ENABLED (AP interface: {config.ap_interface})")
+    else:
+        click.echo("[--] Concurrent mode: DISABLED")
 
     # Summary
     click.echo()
