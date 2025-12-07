@@ -7,6 +7,8 @@
 - [Fix] Only kill hotspotchi-specific dnsmasq processes, not system DNS
 - [Fix] Preserve existing config settings (like concurrent_mode) when saving - don't overwrite entire file
 - [Fix] Set mac_mode to "fixed" when selecting a character (was only setting character index)
+- [Fix] Fix special SSID selection - select_combined() now respects ssid_mode setting
+- [Fix] Reset ssid_mode to "normal" when selecting a regular MAC character
 
 ## 2.2.4 (2025-12-07)
 

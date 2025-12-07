@@ -18,7 +18,7 @@ from datetime import datetime
 from pathlib import Path
 
 from hotspotchi.characters import CHARACTERS, SPECIAL_SSIDS, Character, SpecialSSID
-from hotspotchi.config import HotSpotchiConfig, MacMode
+from hotspotchi.config import HotSpotchiConfig, MacMode, SsidMode
 from hotspotchi.exclusions import get_exclusion_manager
 
 
@@ -226,6 +226,17 @@ def select_combined(
     """
     if config.mac_mode == MacMode.DISABLED:
         return SelectionResult()
+
+    # Special SSID mode - user explicitly selected a special SSID
+    if config.ssid_mode == SsidMode.SPECIAL and SPECIAL_SSIDS:
+        index = min(config.special_ssid_index, len(SPECIAL_SSIDS) - 1)
+        index = max(0, index)
+        special = SPECIAL_SSIDS[index]
+        return SelectionResult(
+            is_special_ssid=True,
+            ssid=special.ssid,
+            name=special.character_name,
+        )
 
     # Fixed mode - just use the regular character selection
     if config.mac_mode == MacMode.FIXED:
