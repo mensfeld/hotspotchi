@@ -4,13 +4,14 @@ API routes for HotSpotchi web dashboard.
 
 import os
 from datetime import datetime, timedelta
+from pathlib import Path
 from typing import Optional
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
 from hotspotchi.characters import CHARACTERS, SPECIAL_SSIDS
-from hotspotchi.config import HotSpotchiConfig, MacMode, SsidMode
+from hotspotchi.config import HotSpotchiConfig, MacMode, SsidMode, load_config
 from hotspotchi.exclusions import get_exclusion_manager
 from hotspotchi.hotspot import HotspotManager
 from hotspotchi.mac import create_mac_address, format_mac
@@ -22,8 +23,19 @@ from hotspotchi.selection import (
 
 router = APIRouter()
 
+# Default config file location
+DEFAULT_CONFIG_PATH = Path("/etc/hotspotchi/config.yaml")
+
+
+def _load_initial_config() -> HotSpotchiConfig:
+    """Load config from file or use defaults."""
+    if DEFAULT_CONFIG_PATH.exists():
+        return load_config(DEFAULT_CONFIG_PATH)
+    return HotSpotchiConfig()
+
+
 # Global config and hotspot manager
-_current_config = HotSpotchiConfig()
+_current_config = _load_initial_config()
 _hotspot_manager: Optional[HotspotManager] = None
 
 

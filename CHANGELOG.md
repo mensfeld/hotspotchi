@@ -1,5 +1,9 @@
 # HotSpotchi Changelog
 
+## 2.2.1 (2025-12-07)
+
+- [Fix] Fix web dashboard not loading config from `/etc/hotspotchi/config.yaml` - this caused concurrent mode settings to be ignored, breaking WiFi when selecting characters via web UI
+
 ## 2.2.0 (2025-12-07)
 
 - [Feature] Add special SSID exclusion support to web UI with search, filtering, and toggle controls
