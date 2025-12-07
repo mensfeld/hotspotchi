@@ -209,10 +209,14 @@ class TestExclusionManagerPersistence:
     def test_loads_from_file(self, temp_dir: Path):
         """Exclusions should be loaded from file."""
         exclusions_file = temp_dir / "exclusions.json"
-        exclusions_file.write_text(json.dumps({
-            "excluded_indices": [1, 2, 3],
-            "excluded_ssid_indices": [4, 5],
-        }))
+        exclusions_file.write_text(
+            json.dumps(
+                {
+                    "excluded_indices": [1, 2, 3],
+                    "excluded_ssid_indices": [4, 5],
+                }
+            )
+        )
 
         manager = ExclusionManager(exclusions_file)
         assert manager.get_excluded() == {1, 2, 3}
