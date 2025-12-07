@@ -215,8 +215,17 @@ def save_config(config: HotSpotchiConfig, config_path: Path) -> None:
         config: Configuration to save
         config_path: Path to write config file
     """
+    from enum import Enum
+
     import yaml
 
     config_path.parent.mkdir(parents=True, exist_ok=True)
+    # Convert to dict and serialize non-YAML-safe types
+    data = config.model_dump()
+    for key, value in data.items():
+        if isinstance(value, Path):
+            data[key] = str(value)
+        elif isinstance(value, Enum):
+            data[key] = value.value
     with open(config_path, "w") as f:
-        yaml.safe_dump(config.model_dump(), f, default_flow_style=False)
+        yaml.safe_dump(data, f, default_flow_style=False)

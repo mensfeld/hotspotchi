@@ -3,9 +3,10 @@
 from datetime import datetime
 from pathlib import Path
 
-from hotspotchi.characters import CHARACTERS
-from hotspotchi.config import HotSpotchiConfig, MacMode
+from hotspotchi.characters import CHARACTERS, SPECIAL_SSIDS
+from hotspotchi.config import HotSpotchiConfig, MacMode, SsidMode
 from hotspotchi.selection import (
+    SelectionResult,
     generate_daily_password,
     get_cycle_index,
     get_day_number,
@@ -13,6 +14,7 @@ from hotspotchi.selection import (
     get_seconds_until_midnight,
     get_upcoming_characters,
     select_character,
+    select_combined,
 )
 
 
@@ -287,3 +289,152 @@ class TestGenerateDailyPassword:
         # If both used same seed, they would be correlated
         # Password should be independent of character selection
         assert len(password) == 16
+
+
+class TestSelectCombined:
+    """Tests for combined character and special SSID selection."""
+
+    def test_returns_selection_result(self):
+        """Should always return a SelectionResult object."""
+        config = HotSpotchiConfig(mac_mode=MacMode.RANDOM)
+        result = select_combined(config)
+        assert isinstance(result, SelectionResult)
+
+    def test_special_ssid_mode_returns_special_ssid(self):
+        """Special SSID mode should return a special SSID, not a character."""
+        config = HotSpotchiConfig(
+            mac_mode=MacMode.FIXED,
+            ssid_mode=SsidMode.SPECIAL,
+            special_ssid_index=0,
+        )
+        result = select_combined(config)
+        assert result.is_special_ssid is True
+        assert result.special_ssid is not None
+        assert result.special_ssid == SPECIAL_SSIDS[0]
+        assert result.character is None
+
+    def test_special_ssid_mode_respects_index(self):
+        """Special SSID mode should use the configured index."""
+        if len(SPECIAL_SSIDS) < 3:
+            return  # Skip if not enough special SSIDs
+        config = HotSpotchiConfig(
+            mac_mode=MacMode.FIXED,
+            ssid_mode=SsidMode.SPECIAL,
+            special_ssid_index=2,
+        )
+        result = select_combined(config)
+        assert result.special_ssid == SPECIAL_SSIDS[2]
+
+    def test_special_ssid_mode_clamps_high_index(self):
+        """Special SSID mode should clamp too-high index to last SSID."""
+        config = HotSpotchiConfig(
+            mac_mode=MacMode.FIXED,
+            ssid_mode=SsidMode.SPECIAL,
+            special_ssid_index=9999,
+        )
+        result = select_combined(config)
+        assert result.special_ssid == SPECIAL_SSIDS[-1]
+
+    def test_fixed_mode_returns_character(self):
+        """Fixed mode (without special SSID mode) should return a character."""
+        config = HotSpotchiConfig(
+            mac_mode=MacMode.FIXED,
+            ssid_mode=SsidMode.NORMAL,
+            fixed_character_index=5,
+        )
+        result = select_combined(config)
+        assert result.is_special_ssid is False
+        assert result.character is not None
+        assert result.character == CHARACTERS[5]
+        assert result.special_ssid is None
+
+    def test_disabled_mode_returns_empty_result(self):
+        """Disabled mode should return an empty SelectionResult."""
+        config = HotSpotchiConfig(mac_mode=MacMode.DISABLED)
+        result = select_combined(config)
+        assert result.character is None
+        assert result.special_ssid is None
+        assert result.name is None
+
+    def test_random_mode_returns_character(self):
+        """Random mode should return a character from the pool."""
+        config = HotSpotchiConfig(mac_mode=MacMode.RANDOM, include_special_ssids=False)
+        result = select_combined(config)
+        assert result.character is not None
+        assert result.character in CHARACTERS
+
+    def test_daily_random_same_day_same_result(self):
+        """Daily random should return same selection for same day."""
+        config = HotSpotchiConfig(mac_mode=MacMode.DAILY_RANDOM, include_special_ssids=False)
+        fixed_date = datetime(2024, 6, 15)
+        result1 = select_combined(config, current_date=fixed_date)
+        result2 = select_combined(config, current_date=fixed_date)
+        assert result1.name == result2.name
+
+    def test_cycle_mode_with_temp_file(self, temp_dir: Path):
+        """Cycle mode should progress through selections."""
+        cycle_file = temp_dir / "cycle.txt"
+        config = HotSpotchiConfig(
+            mac_mode=MacMode.CYCLE,
+            cycle_file=cycle_file,
+            include_special_ssids=False,
+        )
+        result1 = select_combined(config)
+        result2 = select_combined(config)
+        assert result1.character != result2.character
+
+    def test_include_special_ssids_expands_pool(self, temp_dir: Path):
+        """With include_special_ssids, pool should include both characters and SSIDs."""
+        # Use cycle mode to deterministically hit different items
+        cycle_file = temp_dir / "cycle.txt"
+        config = HotSpotchiConfig(
+            mac_mode=MacMode.CYCLE,
+            cycle_file=cycle_file,
+            include_special_ssids=True,
+        )
+        # Cycle through to reach special SSIDs (they come after characters)
+        cycle_file.write_text(str(len(CHARACTERS)))  # Start at first special SSID
+        result = select_combined(config)
+        # Should have selected a special SSID (if any active)
+        from hotspotchi.selection import get_active_special_ssids
+
+        active_ssids = get_active_special_ssids()
+        if active_ssids:
+            assert result.is_special_ssid is True
+
+    def test_selection_result_name_property(self):
+        """SelectionResult.name should work for both types."""
+        config_char = HotSpotchiConfig(
+            mac_mode=MacMode.FIXED,
+            ssid_mode=SsidMode.NORMAL,
+            fixed_character_index=0,
+        )
+        result_char = select_combined(config_char)
+        assert result_char.name == CHARACTERS[0].name
+
+        config_ssid = HotSpotchiConfig(
+            mac_mode=MacMode.FIXED,
+            ssid_mode=SsidMode.SPECIAL,
+            special_ssid_index=0,
+        )
+        result_ssid = select_combined(config_ssid)
+        assert result_ssid.name == SPECIAL_SSIDS[0].character_name
+
+    def test_selection_result_ssid_property(self):
+        """SelectionResult.ssid should return SSID for special SSID selections."""
+        config = HotSpotchiConfig(
+            mac_mode=MacMode.FIXED,
+            ssid_mode=SsidMode.SPECIAL,
+            special_ssid_index=0,
+        )
+        result = select_combined(config)
+        assert result.ssid == SPECIAL_SSIDS[0].ssid
+
+        # Regular character should return None for ssid
+        config_char = HotSpotchiConfig(
+            mac_mode=MacMode.FIXED,
+            ssid_mode=SsidMode.NORMAL,
+            fixed_character_index=0,
+        )
+        result_char = select_combined(config_char)
+        assert result_char.ssid is None

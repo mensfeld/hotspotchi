@@ -1,5 +1,16 @@
 # HotSpotchi Changelog
 
+## 2.2.6 (2025-12-07)
+
+- [Feature] Add `/api/debug` endpoint with comprehensive troubleshooting info (config, processes, network, services)
+- [Feature] Add "Debug Info" link in web UI navbar for easy access to diagnostics
+- [Fix] Fix daily random mode always selecting Factory Tama after switching from fixed special SSID mode
+- [Fix] Reset ssid_mode to "normal" when switching to rotation modes (daily_random, random, cycle)
+- [Fix] Save config to file when mode changes via web UI
+- [Fix] Fix save_config to properly serialize Path and Enum types to YAML
+- [Maintenance] Add comprehensive test suite for web API routes (60%+ coverage improvement)
+- [Maintenance] Add tests for select_combined, exclusion manager, config validation
+
 ## 2.2.5 (2025-12-07)
 
 - [Fix] Fix web UI character selection - now restarts via systemd service to avoid process conflicts

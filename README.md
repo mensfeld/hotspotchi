@@ -31,7 +31,7 @@ Perfect for completionists, rural players without access to many WiFi networks, 
   - `cycle` - Progress through all characters in order
   - `fixed` - Always show a specific character
   - `disabled` - Use device default MAC
-- **Web dashboard** - Monitor and control via browser with DaisyUI interface
+- **Web dashboard** - Monitor and control via browser
 - **Raspberry Pi optimized** - Works with hostapd + dnsmasq
 
 ## Quick Start
@@ -154,24 +154,6 @@ Want to keep the "discovery" aspect of Tama Search? You can exclude specific cha
 - Excluded characters show with an `X` badge and appear faded
 - Use the filter dropdown to view "Excluded Only" or "Available Only"
 - Click "Include All" to reset all exclusions
-
-**Via API:**
-```bash
-# Exclude a character
-curl -X POST http://pi-address:8080/api/characters/5/exclude
-
-# Include a character
-curl -X POST http://pi-address:8080/api/characters/5/include
-
-# Toggle exclusion status
-curl -X POST http://pi-address:8080/api/characters/5/toggle-exclusion
-
-# Get all exclusions
-curl http://pi-address:8080/api/exclusions
-
-# Clear all exclusions
-curl -X DELETE http://pi-address:8080/api/exclusions
-```
 
 **Notes:**
 - Exclusions are stored in `/var/lib/hotspotchi/exclusions.json`

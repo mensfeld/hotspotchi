@@ -360,7 +360,12 @@ async def update_config(update: ConfigUpdate) -> dict:
 
     if update.mac_mode:
         try:
-            config_dict["mac_mode"] = MacMode(update.mac_mode)
+            new_mode = MacMode(update.mac_mode)
+            config_dict["mac_mode"] = new_mode
+            # Reset ssid_mode to NORMAL when switching to rotation modes
+            # This prevents stuck special SSID selection from previous fixed mode
+            if new_mode in (MacMode.DAILY_RANDOM, MacMode.RANDOM, MacMode.CYCLE):
+                config_dict["ssid_mode"] = SsidMode.NORMAL
         except ValueError:
             raise HTTPException(
                 status_code=400, detail=f"Invalid mac_mode: {update.mac_mode}"
@@ -388,6 +393,12 @@ async def update_config(update: ConfigUpdate) -> dict:
         config_dict["custom_ssid"] = update.custom_ssid
 
     _current_config = HotSpotchiConfig(**config_dict)
+
+    # Save config to file so changes persist across restarts
+    import contextlib
+
+    with contextlib.suppress(OSError):
+        _save_current_config()
 
     return {"status": "ok", "message": "Configuration updated"}
 
@@ -753,3 +764,91 @@ async def clear_all_exclusions() -> dict:
         "status": "ok",
         "message": "All characters and special SSIDs are now included in rotation",
     }
+
+
+# ============================================
+# Debug Endpoint
+# ============================================
+
+
+@router.get("/debug")
+async def get_debug_info() -> dict:
+    """Get comprehensive debug information for troubleshooting.
+
+    Returns system status, config, processes, and more.
+    """
+    import subprocess
+    from pathlib import Path
+
+    config = _current_config
+    exclusion_manager = get_exclusion_manager()
+    selection = select_combined(config)
+
+    # Get system process info
+    def run_cmd(cmd: list[str]) -> str:
+        try:
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=5)
+            return result.stdout.strip() or result.stderr.strip()
+        except Exception as e:
+            return f"Error: {e}"
+
+    # Gather debug info
+    debug_info = {
+        "config": {
+            "wifi_interface": config.wifi_interface,
+            "concurrent_mode": config.concurrent_mode,
+            "ap_interface": config.ap_interface,
+            "ssid_mode": config.ssid_mode.value,
+            "mac_mode": config.mac_mode.value,
+            "default_ssid": config.default_ssid,
+            "fixed_character_index": config.fixed_character_index,
+            "special_ssid_index": config.special_ssid_index,
+            "include_special_ssids": config.include_special_ssids,
+            "ap_ip": config.ap_ip,
+            "web_host": config.web_host,
+            "web_port": config.web_port,
+        },
+        "selection": {
+            "character_name": selection.name,
+            "is_special_ssid": selection.is_special_ssid,
+            "ssid": selection.ssid if selection.is_special_ssid else config.default_ssid,
+            "mac_address": format_mac(create_mac_address(selection.character))
+            if selection.character
+            else None,
+        },
+        "exclusions": {
+            "excluded_character_count": exclusion_manager.get_excluded_count(),
+            "excluded_character_indices": sorted(exclusion_manager.get_excluded()),
+            "excluded_ssid_count": exclusion_manager.get_excluded_ssid_count(),
+            "excluded_ssid_indices": sorted(exclusion_manager.get_excluded_ssids()),
+        },
+        "system": {
+            "is_root": _is_root(),
+            "config_file_exists": Path("/etc/hotspotchi/config.yaml").exists(),
+            "exclusions_file_exists": Path("/var/lib/hotspotchi/exclusions.json").exists(),
+        },
+        "processes": {
+            "hostapd_running": run_cmd(["pgrep", "-x", "hostapd"]) != "",
+            "hostapd_pids": run_cmd(["pgrep", "-x", "hostapd"]),
+            "dnsmasq_running": run_cmd(["pgrep", "dnsmasq"]) != "",
+            "dnsmasq_pids": run_cmd(["pgrep", "dnsmasq"]),
+        },
+        "network": {
+            "interfaces": run_cmd(["ip", "-br", "link"]),
+            "wifi_interface_info": run_cmd(["ip", "addr", "show", config.wifi_interface]),
+        },
+        "services": {
+            "hotspotchi_status": run_cmd(["systemctl", "is-active", "hotspotchi"]),
+            "hotspotchi_web_status": run_cmd(["systemctl", "is-active", "hotspotchi-web"]),
+        },
+    }
+
+    # Read config file content if it exists
+    config_path = Path("/etc/hotspotchi/config.yaml")
+    if config_path.exists():
+        try:
+            debug_info["config_file_content"] = config_path.read_text()
+        except Exception as e:
+            debug_info["config_file_content"] = f"Error reading: {e}"
+
+    return debug_info

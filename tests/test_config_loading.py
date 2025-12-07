@@ -3,9 +3,11 @@
 from pathlib import Path
 from unittest.mock import patch
 
+import pytest
 import yaml
 
-from hotspotchi.config import HotSpotchiConfig, MacMode, SsidMode, load_config
+from hotspotchi.characters import SPECIAL_SSIDS
+from hotspotchi.config import HotSpotchiConfig, MacMode, SsidMode, load_config, save_config
 
 
 class TestLoadConfig:
@@ -262,3 +264,219 @@ class TestWebAppConfigLoading:
             assert config.web_port == 8080
         finally:
             app_module.DEFAULT_CONFIG_PATH = original_path
+
+
+class TestPasswordValidation:
+    """Tests for WiFi password validation."""
+
+    def test_valid_password_8_chars(self):
+        """Password with 8 characters should be valid."""
+        config = HotSpotchiConfig(wifi_password="12345678")
+        assert config.wifi_password == "12345678"
+
+    def test_valid_password_16_chars(self):
+        """Password with 16 characters should be valid."""
+        config = HotSpotchiConfig(wifi_password="1234567890123456")
+        assert config.wifi_password == "1234567890123456"
+
+    def test_valid_password_none(self):
+        """None password (daily random) should be valid."""
+        config = HotSpotchiConfig(wifi_password=None)
+        assert config.wifi_password is None
+
+    def test_valid_password_empty(self):
+        """Empty password (open network) should be valid."""
+        config = HotSpotchiConfig(wifi_password="")
+        assert config.wifi_password == ""
+
+    def test_invalid_password_too_short(self):
+        """Password shorter than 8 characters should fail."""
+        with pytest.raises(ValueError, match="at least 8 characters"):
+            HotSpotchiConfig(wifi_password="short")
+
+    def test_invalid_password_7_chars(self):
+        """Password with exactly 7 characters should fail."""
+        with pytest.raises(ValueError, match="at least 8 characters"):
+            HotSpotchiConfig(wifi_password="1234567")
+
+
+class TestSSIDValidation:
+    """Tests for custom SSID validation."""
+
+    def test_valid_ssid_short(self):
+        """Short SSID should be valid."""
+        config = HotSpotchiConfig(custom_ssid="MyNet")
+        assert config.custom_ssid == "MyNet"
+
+    def test_valid_ssid_32_chars(self):
+        """SSID with exactly 32 characters should be valid."""
+        ssid = "A" * 32
+        config = HotSpotchiConfig(custom_ssid=ssid)
+        assert config.custom_ssid == ssid
+
+    def test_valid_ssid_none(self):
+        """None SSID should be valid."""
+        config = HotSpotchiConfig(custom_ssid=None)
+        assert config.custom_ssid is None
+
+    def test_invalid_ssid_too_long(self):
+        """SSID longer than 32 characters should fail."""
+        with pytest.raises(ValueError, match="cannot exceed 32 characters"):
+            HotSpotchiConfig(custom_ssid="A" * 33)
+
+
+class TestGetEffectiveSsid:
+    """Tests for get_effective_ssid method."""
+
+    def test_normal_mode_uses_default(self):
+        """Normal mode should use default SSID."""
+        config = HotSpotchiConfig(ssid_mode=SsidMode.NORMAL, default_ssid="HotSpotchi")
+        assert config.get_effective_ssid() == "HotSpotchi"
+
+    def test_normal_mode_custom_default(self):
+        """Normal mode should use custom default if set."""
+        config = HotSpotchiConfig(ssid_mode=SsidMode.NORMAL, default_ssid="MyDefaultSSID")
+        assert config.get_effective_ssid() == "MyDefaultSSID"
+
+    def test_custom_mode_uses_custom_ssid(self):
+        """Custom mode should use custom SSID."""
+        config = HotSpotchiConfig(ssid_mode=SsidMode.CUSTOM, custom_ssid="MyNetwork")
+        assert config.get_effective_ssid() == "MyNetwork"
+
+    def test_custom_mode_without_custom_ssid_uses_default(self):
+        """Custom mode without custom SSID should fall back to default."""
+        config = HotSpotchiConfig(ssid_mode=SsidMode.CUSTOM, custom_ssid=None)
+        assert config.get_effective_ssid() == "HotSpotchi"
+
+    def test_special_mode_uses_special_ssid(self):
+        """Special mode should use SSID from SPECIAL_SSIDS."""
+        if not SPECIAL_SSIDS:
+            return  # Skip if no special SSIDs
+        config = HotSpotchiConfig(ssid_mode=SsidMode.SPECIAL, special_ssid_index=0)
+        assert config.get_effective_ssid() == SPECIAL_SSIDS[0].ssid
+
+    def test_special_mode_respects_index(self):
+        """Special mode should respect special_ssid_index."""
+        if len(SPECIAL_SSIDS) < 3:
+            return  # Skip if not enough special SSIDs
+        config = HotSpotchiConfig(ssid_mode=SsidMode.SPECIAL, special_ssid_index=2)
+        assert config.get_effective_ssid() == SPECIAL_SSIDS[2].ssid
+
+    def test_special_mode_invalid_index_uses_default(self):
+        """Special mode with invalid index should fall back to default."""
+        config = HotSpotchiConfig(ssid_mode=SsidMode.SPECIAL, special_ssid_index=9999)
+        assert config.get_effective_ssid() == "HotSpotchi"
+
+
+class TestSaveConfig:
+    """Tests for save_config function."""
+
+    def test_saves_to_file(self, temp_dir):
+        """save_config should write config to file."""
+        config_path = temp_dir / "config.yaml"
+        config = HotSpotchiConfig(
+            wifi_interface="wlan1",
+            concurrent_mode=True,
+            mac_mode=MacMode.RANDOM,
+        )
+
+        save_config(config, config_path)
+
+        assert config_path.exists()
+        with open(config_path) as f:
+            data = yaml.safe_load(f)
+        assert data["wifi_interface"] == "wlan1"
+        assert data["concurrent_mode"] is True
+
+    def test_creates_parent_directories(self, temp_dir):
+        """save_config should create parent directories if needed."""
+        config_path = temp_dir / "subdir" / "nested" / "config.yaml"
+        config = HotSpotchiConfig()
+
+        save_config(config, config_path)
+
+        assert config_path.exists()
+
+    def test_roundtrip(self, temp_dir):
+        """Config saved and loaded should be equivalent."""
+        config_path = temp_dir / "config.yaml"
+        original = HotSpotchiConfig(
+            wifi_interface="wlan1",
+            concurrent_mode=True,
+            mac_mode=MacMode.CYCLE,
+            web_port=9000,
+            wifi_password="testpass123",
+        )
+
+        save_config(original, config_path)
+        loaded = load_config(config_path)
+
+        assert loaded.wifi_interface == original.wifi_interface
+        assert loaded.concurrent_mode == original.concurrent_mode
+        assert loaded.mac_mode == original.mac_mode
+        assert loaded.web_port == original.web_port
+        assert loaded.wifi_password == original.wifi_password
+
+
+class TestConfigDefaults:
+    """Tests for default config values."""
+
+    def test_default_wifi_interface(self):
+        """Default wifi_interface should be wlan0."""
+        config = HotSpotchiConfig()
+        assert config.wifi_interface == "wlan0"
+
+    def test_default_concurrent_mode(self):
+        """Default concurrent_mode should be False."""
+        config = HotSpotchiConfig()
+        assert config.concurrent_mode is False
+
+    def test_default_ap_interface(self):
+        """Default ap_interface should be uap0."""
+        config = HotSpotchiConfig()
+        assert config.ap_interface == "uap0"
+
+    def test_default_ssid_mode(self):
+        """Default ssid_mode should be NORMAL."""
+        config = HotSpotchiConfig()
+        assert config.ssid_mode == SsidMode.NORMAL
+
+    def test_default_mac_mode(self):
+        """Default mac_mode should be DAILY_RANDOM."""
+        config = HotSpotchiConfig()
+        assert config.mac_mode == MacMode.DAILY_RANDOM
+
+    def test_default_include_special_ssids(self):
+        """Default include_special_ssids should be True."""
+        config = HotSpotchiConfig()
+        assert config.include_special_ssids is True
+
+    def test_default_wifi_password(self):
+        """Default wifi_password should be None (daily random)."""
+        config = HotSpotchiConfig()
+        assert config.wifi_password is None
+
+    def test_default_ap_ip(self):
+        """Default ap_ip should be 192.168.4.1."""
+        config = HotSpotchiConfig()
+        assert config.ap_ip == "192.168.4.1"
+
+    def test_default_web_host(self):
+        """Default web_host should be 0.0.0.0."""
+        config = HotSpotchiConfig()
+        assert config.web_host == "0.0.0.0"
+
+    def test_default_web_port(self):
+        """Default web_port should be 8080."""
+        config = HotSpotchiConfig()
+        assert config.web_port == 8080
+
+
+class TestConfigExtraIgnore:
+    """Tests for config extra fields handling."""
+
+    def test_ignores_unknown_fields(self):
+        """Config should ignore unknown fields."""
+        config = HotSpotchiConfig(unknown_field="value", another_unknown=123)
+        # Should not raise, and unknown fields should be ignored
+        assert not hasattr(config, "unknown_field")
