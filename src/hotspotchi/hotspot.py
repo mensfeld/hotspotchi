@@ -139,9 +139,7 @@ class HotspotManager:
             return True
 
         # Create virtual interface
-        result = self._run_command(
-            f"iw dev {wifi_iface} interface add {ap_iface} type __ap"
-        )
+        result = self._run_command(f"iw dev {wifi_iface} interface add {ap_iface} type __ap")
         if result.returncode != 0:
             return False
 

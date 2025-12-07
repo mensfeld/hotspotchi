@@ -215,11 +215,27 @@
         <!-- Special SSIDs Panel -->
         <div class="card bg-base-100 shadow-xl" id="ssids-panel" style="display: none;">
             <div class="card-body">
-                <div class="form-control mb-4">
-                    <label class="label cursor-pointer justify-start gap-2">
-                        <input type="checkbox" class="checkbox checkbox-primary" id="active-only" onchange="loadSSIDs()">
-                        <span class="label-text">Show active only</span>
-                    </label>
+                <div class="flex flex-wrap gap-2 mb-4">
+                    <input type="text" placeholder="Search SSIDs..."
+                           class="input input-bordered flex-grow"
+                           id="ssid-search"
+                           oninput="filterSSIDs()">
+                    <select class="select select-bordered" id="ssid-active-filter" onchange="filterSSIDs()">
+                        <option value="">All SSIDs</option>
+                        <option value="active">Active Only</option>
+                        <option value="inactive">Inactive Only</option>
+                    </select>
+                    <select class="select select-bordered" id="ssid-exclusion-filter" onchange="filterSSIDs()">
+                        <option value="">All</option>
+                        <option value="available">Available Only</option>
+                        <option value="excluded">Excluded Only</option>
+                    </select>
+                </div>
+                <div class="flex items-center gap-4 mb-4 text-sm">
+                    <span class="text-base-content/60">
+                        <span id="ssid-available-count">0</span> available / <span id="ssid-excluded-count">0</span> excluded
+                    </span>
+                    <button class="btn btn-xs btn-outline" onclick="clearSSIDExclusions()">Include All SSIDs</button>
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="ssid-grid">
                     <!-- SSIDs populated by JavaScript -->
@@ -239,6 +255,7 @@
         let countdownInterval;
         let secondsRemaining = 0;
         let allCharacters = [];
+        let allSSIDs = [];
         let currentMacMode = 'daily_random';
         let isRoot = false;
         let hotspotRunning = false;
@@ -428,30 +445,107 @@
 
         async function loadSSIDs() {
             try {
-                const activeOnly = document.getElementById('active-only').checked;
-                const response = await fetch(`/api/ssids?active_only=${activeOnly}`);
-                const ssids = await response.json();
-
-                const grid = document.getElementById('ssid-grid');
-                grid.innerHTML = ssids.map(ssid => `
-                    <div class="card bg-base-200 ${!ssid.active ? 'opacity-60' : ''}">
-                        <div class="card-body p-4">
-                            <h3 class="card-title text-sm">
-                                ${ssid.character_name}
-                                ${!ssid.active ? '<span class="badge badge-warning badge-sm">Inactive</span>' : ''}
-                            </h3>
-                            <p class="text-xs font-mono break-all">${ssid.ssid}</p>
-                            <p class="text-xs text-base-content/60">${ssid.notes}</p>
-                            <div class="card-actions justify-end mt-2">
-                                <button class="btn btn-primary btn-xs" onclick="selectSSID(${ssid.index})" ${!ssid.active ? 'disabled' : ''}>
-                                    Use This
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                `).join('');
+                const response = await fetch('/api/ssids');
+                allSSIDs = await response.json();
+                renderSSIDs(allSSIDs);
             } catch (error) {
                 console.error('Failed to load SSIDs:', error);
+            }
+        }
+
+        function renderSSIDs(ssids) {
+            const grid = document.getElementById('ssid-grid');
+            grid.innerHTML = ssids.map(ssid => `
+                <div class="card bg-base-200 relative group ${!ssid.active ? 'opacity-60' : ''} ${ssid.excluded ? 'ring-2 ring-error' : ''}">
+                    <button class="absolute top-2 right-2 btn btn-circle btn-xs opacity-0 group-hover:opacity-100 transition-opacity ${ssid.excluded ? 'btn-success' : 'btn-error'}"
+                            onclick="event.stopPropagation(); toggleSSIDExclusion(${ssid.index})"
+                            title="${ssid.excluded ? 'Include in rotation' : 'Exclude from rotation'}">
+                        ${ssid.excluded ? '+' : '-'}
+                    </button>
+                    <div class="card-body p-4">
+                        <h3 class="card-title text-sm">
+                            ${ssid.character_name}
+                            ${ssid.excluded ? '<span class="badge badge-error badge-sm">Excluded</span>' : ''}
+                            ${!ssid.active ? '<span class="badge badge-warning badge-sm">Inactive</span>' : ''}
+                        </h3>
+                        <p class="text-xs font-mono break-all">${ssid.ssid}</p>
+                        <p class="text-xs text-base-content/60">${ssid.notes}</p>
+                        <div class="card-actions justify-end mt-2">
+                            <button class="btn btn-primary btn-xs" onclick="selectSSID(${ssid.index})" ${!ssid.active ? 'disabled' : ''}>
+                                Use This
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+
+            // Update counts
+            const availableCount = allSSIDs.filter(s => s.active && !s.excluded).length;
+            const excludedCount = allSSIDs.filter(s => s.excluded).length;
+            document.getElementById('ssid-available-count').textContent = availableCount;
+            document.getElementById('ssid-excluded-count').textContent = excludedCount;
+        }
+
+        function filterSSIDs() {
+            const search = document.getElementById('ssid-search').value.toLowerCase();
+            const activeFilter = document.getElementById('ssid-active-filter').value;
+            const exclusionFilter = document.getElementById('ssid-exclusion-filter').value;
+
+            let filtered = allSSIDs;
+
+            if (search) {
+                filtered = filtered.filter(s =>
+                    s.character_name.toLowerCase().includes(search) ||
+                    s.ssid.toLowerCase().includes(search) ||
+                    s.notes.toLowerCase().includes(search)
+                );
+            }
+
+            if (activeFilter === 'active') {
+                filtered = filtered.filter(s => s.active);
+            } else if (activeFilter === 'inactive') {
+                filtered = filtered.filter(s => !s.active);
+            }
+
+            if (exclusionFilter === 'available') {
+                filtered = filtered.filter(s => !s.excluded);
+            } else if (exclusionFilter === 'excluded') {
+                filtered = filtered.filter(s => s.excluded);
+            }
+
+            renderSSIDs(filtered);
+        }
+
+        async function toggleSSIDExclusion(index) {
+            try {
+                const response = await fetch(`/api/ssids/${index}/toggle-exclusion`, { method: 'POST' });
+                if (response.ok) {
+                    const result = await response.json();
+                    // Update the SSID in allSSIDs
+                    const ssidIndex = allSSIDs.findIndex(s => s.index === index);
+                    if (ssidIndex >= 0) {
+                        allSSIDs[ssidIndex].excluded = result.excluded;
+                    }
+                    filterSSIDs();
+                    showToast(`${result.character}: ${result.action}`, result.excluded ? 'warning' : 'success');
+                }
+            } catch (error) {
+                console.error('Failed to toggle SSID exclusion:', error);
+                showToast('Failed to toggle exclusion', 'error');
+            }
+        }
+
+        async function clearSSIDExclusions() {
+            try {
+                const response = await fetch('/api/ssid-exclusions', { method: 'DELETE' });
+                if (response.ok) {
+                    // Reload SSIDs to get updated exclusion status
+                    await loadSSIDs();
+                    showToast('All SSIDs included', 'success');
+                }
+            } catch (error) {
+                console.error('Failed to clear SSID exclusions:', error);
+                showToast('Failed to clear exclusions', 'error');
             }
         }
 

@@ -81,6 +81,7 @@ class SpecialSSIDResponse(BaseModel):
     character_name: str
     notes: str
     active: bool
+    excluded: bool
 
 
 class UpcomingCharacter(BaseModel):
@@ -206,11 +207,22 @@ async def get_character(index: int) -> CharacterResponse:
 
 
 @router.get("/ssids", response_model=list[SpecialSSIDResponse])
-async def list_ssids(active_only: bool = False) -> list[SpecialSSIDResponse]:
+async def list_ssids(
+    active_only: bool = False,
+    excluded_only: bool = False,
+    available_only: bool = False,
+) -> list[SpecialSSIDResponse]:
     """List all special SSID characters."""
+    exclusion_manager = get_exclusion_manager()
     result = []
     for i, ssid in enumerate(SPECIAL_SSIDS):
+        is_excluded = exclusion_manager.is_ssid_excluded(i)
+
         if active_only and not ssid.active:
+            continue
+        if excluded_only and not is_excluded:
+            continue
+        if available_only and is_excluded:
             continue
 
         result.append(
@@ -220,6 +232,7 @@ async def list_ssids(active_only: bool = False) -> list[SpecialSSIDResponse]:
                 character_name=ssid.character_name,
                 notes=ssid.notes,
                 active=ssid.active,
+                excluded=is_excluded,
             )
         )
 
@@ -232,6 +245,7 @@ async def get_ssid(index: int) -> SpecialSSIDResponse:
     if not 0 <= index < len(SPECIAL_SSIDS):
         raise HTTPException(status_code=404, detail="SSID not found")
 
+    exclusion_manager = get_exclusion_manager()
     ssid = SPECIAL_SSIDS[index]
     return SpecialSSIDResponse(
         index=index,
@@ -239,6 +253,7 @@ async def get_ssid(index: int) -> SpecialSSIDResponse:
         character_name=ssid.character_name,
         notes=ssid.notes,
         active=ssid.active,
+        excluded=exclusion_manager.is_ssid_excluded(index),
     )
 
 
@@ -546,4 +561,104 @@ async def clear_exclusions() -> dict:
     return {
         "status": "ok",
         "message": "All characters are now included in rotation",
+    }
+
+
+# ============================================
+# Special SSID Exclusion Endpoints
+# ============================================
+
+
+@router.post("/ssids/{index}/exclude")
+async def exclude_ssid(index: int) -> dict:
+    """Exclude a special SSID from rotation modes."""
+    if not 0 <= index < len(SPECIAL_SSIDS):
+        raise HTTPException(status_code=404, detail="SSID not found")
+
+    exclusion_manager = get_exclusion_manager()
+    exclusion_manager.exclude_ssid(index)
+    ssid = SPECIAL_SSIDS[index]
+
+    return {
+        "status": "ok",
+        "action": "excluded",
+        "character": ssid.character_name,
+        "index": index,
+    }
+
+
+@router.post("/ssids/{index}/include")
+async def include_ssid(index: int) -> dict:
+    """Include a previously excluded special SSID in rotation modes."""
+    if not 0 <= index < len(SPECIAL_SSIDS):
+        raise HTTPException(status_code=404, detail="SSID not found")
+
+    exclusion_manager = get_exclusion_manager()
+    exclusion_manager.include_ssid(index)
+    ssid = SPECIAL_SSIDS[index]
+
+    return {
+        "status": "ok",
+        "action": "included",
+        "character": ssid.character_name,
+        "index": index,
+    }
+
+
+@router.post("/ssids/{index}/toggle-exclusion")
+async def toggle_ssid_exclusion(index: int) -> dict:
+    """Toggle exclusion status for a special SSID."""
+    if not 0 <= index < len(SPECIAL_SSIDS):
+        raise HTTPException(status_code=404, detail="SSID not found")
+
+    exclusion_manager = get_exclusion_manager()
+    is_now_excluded = exclusion_manager.toggle_ssid(index)
+    ssid = SPECIAL_SSIDS[index]
+
+    return {
+        "status": "ok",
+        "action": "excluded" if is_now_excluded else "included",
+        "character": ssid.character_name,
+        "index": index,
+        "excluded": is_now_excluded,
+    }
+
+
+@router.get("/ssid-exclusions")
+async def get_ssid_exclusions() -> dict:
+    """Get all excluded special SSID indices."""
+    exclusion_manager = get_exclusion_manager()
+    excluded = exclusion_manager.get_excluded_ssids()
+    active_count = sum(1 for s in SPECIAL_SSIDS if s.active)
+
+    return {
+        "excluded_indices": sorted(excluded),
+        "excluded_count": len(excluded),
+        "total_ssids": len(SPECIAL_SSIDS),
+        "active_ssids": active_count,
+        "available_count": active_count - len(excluded),
+    }
+
+
+@router.delete("/ssid-exclusions")
+async def clear_ssid_exclusions() -> dict:
+    """Clear all special SSID exclusions."""
+    exclusion_manager = get_exclusion_manager()
+    exclusion_manager.clear_ssids()
+
+    return {
+        "status": "ok",
+        "message": "All special SSIDs are now included in rotation",
+    }
+
+
+@router.delete("/all-exclusions")
+async def clear_all_exclusions() -> dict:
+    """Clear all exclusions (both characters and special SSIDs)."""
+    exclusion_manager = get_exclusion_manager()
+    exclusion_manager.clear_all()
+
+    return {
+        "status": "ok",
+        "message": "All characters and special SSIDs are now included in rotation",
     }
