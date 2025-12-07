@@ -232,11 +232,7 @@ def select_combined(
         index = min(config.special_ssid_index, len(SPECIAL_SSIDS) - 1)
         index = max(0, index)
         special = SPECIAL_SSIDS[index]
-        return SelectionResult(
-            is_special_ssid=True,
-            ssid=special.ssid,
-            name=special.character_name,
-        )
+        return SelectionResult(special_ssid=special)
 
     # Fixed mode - just use the regular character selection
     if config.mac_mode == MacMode.FIXED:
