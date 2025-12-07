@@ -16,7 +16,6 @@ import random
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
 
 from hotspotchi.characters import CHARACTERS, SPECIAL_SSIDS, Character, SpecialSSID
 from hotspotchi.config import HotSpotchiConfig, MacMode
@@ -30,11 +29,11 @@ class SelectionResult:
     Can be either a MAC-based character or a special SSID character.
     """
 
-    character: Optional[Character] = None
-    special_ssid: Optional[SpecialSSID] = None
+    character: Character | None = None
+    special_ssid: SpecialSSID | None = None
 
     @property
-    def name(self) -> Optional[str]:
+    def name(self) -> str | None:
         """Get the character name."""
         if self.special_ssid:
             return self.special_ssid.character_name
@@ -48,14 +47,14 @@ class SelectionResult:
         return self.special_ssid is not None
 
     @property
-    def ssid(self) -> Optional[str]:
+    def ssid(self) -> str | None:
         """Get the SSID if this is a special SSID selection."""
         if self.special_ssid:
             return self.special_ssid.ssid
         return None
 
 
-def get_day_number(date: Optional[datetime] = None) -> int:
+def get_day_number(date: datetime | None = None) -> int:
     """Calculate a unique number for a given day.
 
     This provides a deterministic seed for daily random selection,
@@ -138,9 +137,9 @@ def get_cycle_index(cycle_file: Path, total_characters: int) -> int:
 def select_character(
     config: HotSpotchiConfig,
     characters: tuple[Character, ...] = CHARACTERS,
-    current_date: Optional[datetime] = None,
+    current_date: datetime | None = None,
     respect_exclusions: bool = True,
-) -> Optional[Character]:
+) -> Character | None:
     """Select a character based on the configured MAC mode.
 
     Args:
@@ -208,7 +207,7 @@ def get_active_special_ssids(respect_exclusions: bool = True) -> list[tuple[int,
 
 def select_combined(
     config: HotSpotchiConfig,
-    current_date: Optional[datetime] = None,
+    current_date: datetime | None = None,
     respect_exclusions: bool = True,
 ) -> SelectionResult:
     """Select a character from the combined pool of MAC and special SSID characters.
@@ -271,7 +270,7 @@ def select_combined(
 def get_next_character(
     config: HotSpotchiConfig,
     characters: tuple[Character, ...] = CHARACTERS,
-) -> Optional[Character]:
+) -> Character | None:
     """Preview the next character without advancing state.
 
     Useful for showing what character will appear next in cycle mode.
@@ -344,7 +343,7 @@ def get_seconds_until_midnight() -> int:
     return int(delta.total_seconds())
 
 
-def generate_daily_password(current_date: Optional[datetime] = None) -> str:
+def generate_daily_password(current_date: datetime | None = None) -> str:
     """Generate a random WPA2 password that changes daily.
 
     Uses the same deterministic daily seed as character selection,

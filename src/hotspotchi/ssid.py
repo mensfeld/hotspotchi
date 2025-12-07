@@ -5,13 +5,11 @@ Handles selection of WiFi network names (SSIDs) based on configuration,
 including special event SSIDs that trigger exclusive characters.
 """
 
-from typing import Optional
-
 from hotspotchi.characters import SPECIAL_SSIDS, SpecialSSID
 from hotspotchi.config import HotSpotchiConfig, SsidMode
 
 
-def resolve_ssid(config: HotSpotchiConfig) -> tuple[str, Optional[str]]:
+def resolve_ssid(config: HotSpotchiConfig) -> tuple[str, str | None]:
     """Resolve the SSID to use based on configuration.
 
     Args:
@@ -34,7 +32,7 @@ def resolve_ssid(config: HotSpotchiConfig) -> tuple[str, Optional[str]]:
     return config.default_ssid, None
 
 
-def find_ssid_by_character(character_name: str) -> Optional[SpecialSSID]:
+def find_ssid_by_character(character_name: str) -> SpecialSSID | None:
     """Find a special SSID by character name.
 
     Args:
@@ -50,7 +48,7 @@ def find_ssid_by_character(character_name: str) -> Optional[SpecialSSID]:
     return None
 
 
-def find_ssid_by_ssid_string(ssid_string: str) -> Optional[SpecialSSID]:
+def find_ssid_by_ssid_string(ssid_string: str) -> SpecialSSID | None:
     """Find a special SSID by its SSID string.
 
     Args:
@@ -65,7 +63,7 @@ def find_ssid_by_ssid_string(ssid_string: str) -> Optional[SpecialSSID]:
     return None
 
 
-def get_ssid_index(ssid_string: str) -> Optional[int]:
+def get_ssid_index(ssid_string: str) -> int | None:
     """Get the index of a special SSID.
 
     Useful for setting special_ssid_index in configuration.
@@ -82,7 +80,7 @@ def get_ssid_index(ssid_string: str) -> Optional[int]:
     return None
 
 
-def get_ssid_index_by_character(character_name: str) -> Optional[int]:
+def get_ssid_index_by_character(character_name: str) -> int | None:
     """Get the index of a special SSID by character name.
 
     Args:

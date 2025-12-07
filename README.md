@@ -1,7 +1,7 @@
 # HotSpotchi
 
 [![CI](https://github.com/mensfeld/hotspotchi/actions/workflows/ci.yml/badge.svg)](https://github.com/mensfeld/hotspotchi/actions/workflows/ci.yml)
-[![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
+[![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 Create WiFi access points with custom MAC addresses and SSIDs for meeting characters in Tamagotchi Uni's **Tama Search** feature.
@@ -470,7 +470,7 @@ To update HotSpotchi to the latest version:
 
 ```bash
 # Navigate to your HotSpotchi directory
-cd /path/to/hotspotchi
+cd ~/hotspotchi
 
 # Stop the running services
 sudo systemctl stop hotspotchi hotspotchi-web
@@ -478,8 +478,8 @@ sudo systemctl stop hotspotchi hotspotchi-web
 # Pull the latest changes
 git pull origin master
 
-# Reinstall the package
-pip install -e ".[web]" --upgrade
+# Reinstall the package using the venv pip
+sudo /opt/hotspotchi/venv/bin/pip install -e ".[all]" --upgrade
 
 # Restart services
 sudo systemctl start hotspotchi hotspotchi-web
@@ -494,7 +494,7 @@ sudo bash scripts/install.sh
 To check for available updates without applying them:
 
 ```bash
-cd /path/to/hotspotchi
+cd ~/hotspotchi
 git fetch origin
 git log HEAD..origin/master --oneline
 ```

@@ -14,7 +14,6 @@ import tempfile
 import time
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional
 
 from hotspotchi.config import HotSpotchiConfig
 from hotspotchi.mac import create_mac_address, format_mac
@@ -27,11 +26,11 @@ class HotspotState:
 
     running: bool
     ssid: str
-    mac_address: Optional[str]
-    character_name: Optional[str]
+    mac_address: str | None
+    character_name: str | None
     ip_address: str
-    hostapd_pid: Optional[int] = None
-    dnsmasq_pid: Optional[int] = None
+    hostapd_pid: int | None = None
+    dnsmasq_pid: int | None = None
 
 
 class HotspotManager:
@@ -39,11 +38,11 @@ class HotspotManager:
 
     def __init__(self, config: HotSpotchiConfig):
         self.config = config
-        self._hostapd_process: Optional[subprocess.Popen] = None
-        self._dnsmasq_process: Optional[subprocess.Popen] = None
-        self._hostapd_config: Optional[Path] = None
-        self._dnsmasq_config: Optional[Path] = None
-        self._original_mac: Optional[str] = None
+        self._hostapd_process: subprocess.Popen | None = None
+        self._dnsmasq_process: subprocess.Popen | None = None
+        self._hostapd_config: Path | None = None
+        self._dnsmasq_config: Path | None = None
+        self._original_mac: str | None = None
         self._virtual_interface_created: bool = False
 
     def check_root(self) -> bool:
@@ -189,7 +188,7 @@ class HotspotManager:
             check=False,
         )
 
-    def _get_current_mac(self, interface: Optional[str] = None) -> Optional[str]:
+    def _get_current_mac(self, interface: str | None = None) -> str | None:
         """Get current MAC address of the interface."""
         if interface is None:
             interface = self._get_effective_interface()
@@ -222,7 +221,7 @@ class HotspotManager:
         time.sleep(0.5)
         return True
 
-    def _get_effective_password(self) -> Optional[str]:
+    def _get_effective_password(self) -> str | None:
         """Get the password to use for the WiFi network.
 
         Returns:
@@ -475,7 +474,7 @@ dhcp-range={self.config.dhcp_range_start},{self.config.dhcp_range_end},{self.con
         result = self._run_command("pgrep -x hostapd")
         return result.returncode == 0
 
-    def restart(self, new_config: Optional[HotSpotchiConfig] = None) -> HotspotState:
+    def restart(self, new_config: HotSpotchiConfig | None = None) -> HotspotState:
         """Restart the hotspot with optional new configuration.
 
         Args:

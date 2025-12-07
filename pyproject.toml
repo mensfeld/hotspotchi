@@ -4,11 +4,11 @@ build-backend = "hatchling.build"
 
 [project]
 name = "hotspotchi"
-version = "2.2.3"
+version = "2.2.4"
 description = "Tamagotchi Uni WiFi hotspot for meeting characters via Tama Search"
 readme = "README.md"
 license = "MIT"
-requires-python = ">=3.9"
+requires-python = ">=3.11"
 authors = [
     { name = "HotSpotchi Contributors" }
 ]
@@ -21,9 +21,9 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Operating System :: POSIX :: Linux",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.9",
-    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Topic :: Games/Entertainment",
 ]
 
@@ -79,7 +79,7 @@ asyncio_mode = "auto"
 addopts = "-v --tb=short"
 
 [tool.ruff]
-target-version = "py39"
+target-version = "py311"
 line-length = 100
 src = ["src", "tests"]
 
@@ -103,7 +103,7 @@ ignore = [
 known-first-party = ["hotspotchi"]
 
 [tool.mypy]
-python_version = "3.9"
+python_version = "3.11"
 warn_return_any = true
 warn_unused_configs = true
 ignore_missing_imports = true

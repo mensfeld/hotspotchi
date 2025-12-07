@@ -6,7 +6,6 @@ list characters, and configure settings.
 """
 
 from pathlib import Path
-from typing import Optional
 
 import click
 
@@ -78,15 +77,15 @@ def main(ctx: click.Context) -> None:
     help="Enable/disable concurrent mode",
 )
 def start(
-    config_path: Optional[Path],
-    mac_mode: Optional[str],
-    ssid_mode: Optional[str],
-    ssid: Optional[str],
-    special_index: Optional[int],
-    character_index: Optional[int],
-    interface: Optional[str],
-    password: Optional[str],
-    concurrent: Optional[bool],
+    config_path: Path | None,
+    mac_mode: str | None,
+    ssid_mode: str | None,
+    ssid: str | None,
+    special_index: int | None,
+    character_index: int | None,
+    interface: str | None,
+    password: str | None,
+    concurrent: bool | None,
 ) -> None:
     """Start the WiFi hotspot.
 
@@ -138,7 +137,7 @@ def start(
 @main.command()
 @click.option("--mac-mode", default=None, help="MAC mode to preview (default: from config)")
 @click.option("--character-index", type=int, default=None, help="Fixed character index")
-def status(mac_mode: Optional[str], character_index: Optional[int]) -> None:
+def status(mac_mode: str | None, character_index: int | None) -> None:
     """Show current/preview character selection."""
     # Load config from file first
     if DEFAULT_CONFIG_PATH.exists():
@@ -192,7 +191,7 @@ def status(mac_mode: Optional[str], character_index: Optional[int]) -> None:
 @main.command("list-characters")
 @click.option("--season", help="Filter by season (spring/summer/fall/winter)")
 @click.option("--search", help="Search characters by name")
-def list_characters(season: Optional[str], search: Optional[str]) -> None:
+def list_characters(season: str | None, search: str | None) -> None:
     """List all MAC-based characters."""
     chars = list(CHARACTERS)
 

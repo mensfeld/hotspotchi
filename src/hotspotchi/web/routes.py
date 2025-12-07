@@ -5,7 +5,6 @@ API routes for HotSpotchi web dashboard.
 import os
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Optional
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
@@ -36,7 +35,7 @@ def _load_initial_config() -> HotSpotchiConfig:
 
 # Global config and hotspot manager
 _current_config = _load_initial_config()
-_hotspot_manager: Optional[HotspotManager] = None
+_hotspot_manager: HotspotManager | None = None
 
 
 def _get_hotspot_manager() -> HotspotManager:
@@ -56,12 +55,12 @@ class StatusResponse(BaseModel):
     """Current hotspot status."""
 
     ssid: str
-    mac_address: Optional[str]
-    character_name: Optional[str]
+    mac_address: str | None
+    character_name: str | None
     mac_mode: str
     ssid_mode: str
-    next_change_at: Optional[datetime]
-    seconds_until_change: Optional[int]
+    next_change_at: datetime | None
+    seconds_until_change: int | None
     total_characters: int
     available_characters: int
     excluded_characters: int
@@ -80,7 +79,7 @@ class CharacterResponse(BaseModel):
     byte1: int
     byte2: int
     mac_address: str
-    season: Optional[str]
+    season: str | None
     excluded: bool
 
 
@@ -106,11 +105,11 @@ class UpcomingCharacter(BaseModel):
 class ConfigUpdate(BaseModel):
     """Configuration update request."""
 
-    mac_mode: Optional[str] = None
-    ssid_mode: Optional[str] = None
-    special_ssid_index: Optional[int] = None
-    fixed_character_index: Optional[int] = None
-    custom_ssid: Optional[str] = None
+    mac_mode: str | None = None
+    ssid_mode: str | None = None
+    special_ssid_index: int | None = None
+    fixed_character_index: int | None = None
+    custom_ssid: str | None = None
 
 
 @router.get("/status", response_model=StatusResponse)
@@ -169,8 +168,8 @@ async def get_status() -> StatusResponse:
 
 @router.get("/characters", response_model=list[CharacterResponse])
 async def list_characters(
-    season: Optional[str] = None,
-    search: Optional[str] = None,
+    season: str | None = None,
+    search: str | None = None,
     excluded_only: bool = False,
     available_only: bool = False,
 ) -> list[CharacterResponse]:

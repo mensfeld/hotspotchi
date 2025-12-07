@@ -9,7 +9,6 @@ Characters are loaded from data/characters.yaml for easy customization.
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional, Union
 
 import yaml
 
@@ -28,7 +27,7 @@ class Character:
     byte1: int
     byte2: int
     name: str
-    season: Optional[str] = None
+    season: str | None = None
 
     def __post_init__(self) -> None:
         """Validate byte values are in valid range."""
@@ -56,7 +55,7 @@ class SpecialSSID:
     active: bool = True
 
 
-def _parse_byte(value: Union[int, str]) -> int:
+def _parse_byte(value: int | str) -> int:
     """Parse a byte value from YAML (handles hex strings like '0x00')."""
     if isinstance(value, int):
         return value
@@ -112,7 +111,7 @@ def _load_characters_from_yaml() -> tuple[tuple[Character, ...], tuple[SpecialSS
 CHARACTERS, SPECIAL_SSIDS = _load_characters_from_yaml()
 
 
-def get_character_by_name(name: str) -> Optional[Character]:
+def get_character_by_name(name: str) -> Character | None:
     """Find a character by name (case-insensitive).
 
     Args:
@@ -128,7 +127,7 @@ def get_character_by_name(name: str) -> Optional[Character]:
     return None
 
 
-def get_character_by_bytes(byte1: int, byte2: int) -> Optional[Character]:
+def get_character_by_bytes(byte1: int, byte2: int) -> Character | None:
     """Find a character by its byte values.
 
     Args:

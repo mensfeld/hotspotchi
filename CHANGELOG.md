@@ -1,5 +1,13 @@
 # HotSpotchi Changelog
 
+## 2.2.4 (2025-12-07)
+
+- [Fix] Fix hostapd error message capture (outputs to stdout, not stderr)
+- [Fix] Systemd services now use venv Python directly for reliability
+- [Maintenance] Drop Python 3.9/3.10 support, require Python 3.11+
+- [Maintenance] Update README with correct venv pip commands for updating
+- [Maintenance] Update install.sh to use venv Python in systemd services
+
 ## 2.2.3 (2025-12-07)
 
 - [Fix] Fix web server not loading `web_host` and `web_port` from config file

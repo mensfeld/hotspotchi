@@ -7,7 +7,6 @@ for Raspberry Pi WiFi hotspot operation.
 
 from enum import Enum
 from pathlib import Path
-from typing import Optional
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -82,7 +81,7 @@ class HotSpotchiConfig(BaseModel):
         default="HotSpotchi",
         description="Default network name for normal mode",
     )
-    custom_ssid: Optional[str] = Field(
+    custom_ssid: str | None = Field(
         default=None,
         description="Custom network name for custom mode",
     )
@@ -116,7 +115,7 @@ class HotSpotchiConfig(BaseModel):
     # None = generate random daily password (default, recommended)
     # Empty string = open network (not recommended)
     # Any string = use that fixed password
-    wifi_password: Optional[str] = Field(
+    wifi_password: str | None = Field(
         default=None,
         description="WiFi password (WPA2). None=daily random, ''=open, or set fixed password",
     )
@@ -157,7 +156,7 @@ class HotSpotchiConfig(BaseModel):
 
     @field_validator("wifi_password")
     @classmethod
-    def validate_password(cls, v: Optional[str]) -> Optional[str]:
+    def validate_password(cls, v: str | None) -> str | None:
         """Validate WiFi password meets WPA2 requirements."""
         # None = daily random password (valid)
         # Empty string = open network (valid but not recommended)
@@ -168,7 +167,7 @@ class HotSpotchiConfig(BaseModel):
 
     @field_validator("custom_ssid")
     @classmethod
-    def validate_ssid(cls, v: Optional[str]) -> Optional[str]:
+    def validate_ssid(cls, v: str | None) -> str | None:
         """Validate SSID length."""
         if v is not None and len(v) > 32:
             raise ValueError("SSID cannot exceed 32 characters")
@@ -190,7 +189,7 @@ class HotSpotchiConfig(BaseModel):
         return self.default_ssid
 
 
-def load_config(config_path: Optional[Path] = None) -> HotSpotchiConfig:
+def load_config(config_path: Path | None = None) -> HotSpotchiConfig:
     """Load configuration from file and/or environment.
 
     Args:

@@ -276,7 +276,7 @@ After=network.target
 
 [Service]
 Type=simple
-ExecStart=/usr/local/bin/hotspotchi start
+ExecStart=/opt/hotspotchi/venv/bin/python -m hotspotchi.cli start
 ExecStop=/bin/kill -SIGTERM \$MAINPID
 Restart=on-failure
 RestartSec=5
@@ -301,7 +301,7 @@ After=network.target
 
 [Service]
 Type=simple
-ExecStart=/usr/local/bin/hotspotchi-web
+ExecStart=/opt/hotspotchi/venv/bin/python -m hotspotchi.web.app
 Restart=on-failure
 RestartSec=5
 StandardOutput=journal

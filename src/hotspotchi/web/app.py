@@ -3,7 +3,6 @@ FastAPI application for HotSpotchi web dashboard.
 """
 
 from pathlib import Path
-from typing import Optional
 
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse
@@ -66,8 +65,8 @@ def _load_server_config() -> HotSpotchiConfig:
 
 
 def run_server(
-    host: Optional[str] = None,
-    port: Optional[int] = None,
+    host: str | None = None,
+    port: int | None = None,
     reload: bool = False,
 ) -> None:
     """Run the web server.
