@@ -124,6 +124,18 @@ class HotspotManager:
                                 pass
         return 7  # Default channel
 
+    def _is_5ghz_channel(self, channel: int) -> bool:
+        """Check if a channel is in the 5GHz band.
+
+        Args:
+            channel: WiFi channel number
+
+        Returns:
+            True if 5GHz, False if 2.4GHz
+        """
+        # 2.4GHz channels are 1-14, 5GHz channels are 36+
+        return channel >= 36
+
     def _create_virtual_interface(self) -> bool:
         """Create virtual AP interface for concurrent mode.
 
@@ -250,10 +262,13 @@ class HotspotManager:
         # In concurrent mode, must use same channel as station
         channel = self._get_current_channel() if self.config.concurrent_mode else 7
 
+        # Use hw_mode=a for 5GHz channels, hw_mode=g for 2.4GHz
+        hw_mode = "a" if self._is_5ghz_channel(channel) else "g"
+
         config = f"""interface={interface}
 driver=nl80211
 ssid={ssid}
-hw_mode=g
+hw_mode={hw_mode}
 channel={channel}
 wmm_enabled=0
 macaddr_acl=0
