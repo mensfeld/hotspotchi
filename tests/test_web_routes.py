@@ -433,3 +433,286 @@ class TestHealthEndpoint:
         response = client.get("/")
         # May redirect to dashboard, so accept 200 or 307
         assert response.status_code in (200, 307)
+
+
+class TestDebugEndpoint:
+    """Tests for the debug API endpoint."""
+
+    def test_get_debug_info(self, client: TestClient):
+        """GET /api/debug should return debug information."""
+        response = client.get("/api/debug")
+        assert response.status_code == 200
+        data = response.json()
+
+        # Check structure - debug info has these top-level keys
+        assert "config" in data or "timestamp" in data
+
+    def test_debug_config_section(self, client: TestClient):
+        """Debug info should include config details."""
+        response = client.get("/api/debug")
+        data = response.json()
+
+        # The debug response should have config info
+        assert "config" in data
+        config = data["config"]
+        assert isinstance(config, dict)
+
+
+class TestHealthEndpointExtended:
+    """Additional tests for health-related endpoints."""
+
+    def test_health_check_endpoint(self, client: TestClient):
+        """GET /health should return health status."""
+        response = client.get("/health")
+        assert response.status_code == 200
+        data = response.json()
+        assert data["status"] == "ok"
+        assert "version" in data
+
+
+class TestDashboardEndpoint:
+    """Tests for the dashboard endpoint."""
+
+    def test_dashboard_renders(self, client: TestClient):
+        """GET / should render the dashboard page."""
+        response = client.get("/")
+        assert response.status_code == 200
+        assert "text/html" in response.headers.get("content-type", "")
+
+
+class TestUpcomingEndpoint:
+    """Tests for the upcoming characters endpoint."""
+
+    def test_upcoming_not_cycle_mode(self, client: TestClient):
+        """GET /api/upcoming should return empty when not in cycle mode."""
+        # Default mode is daily_random, not cycle
+        response = client.get("/api/upcoming")
+        assert response.status_code == 200
+        assert response.json() == []
+
+    def test_upcoming_with_count(self, client: TestClient):
+        """GET /api/upcoming?count=5 should accept count parameter."""
+        response = client.get("/api/upcoming?count=5")
+        assert response.status_code == 200
+
+
+class TestHotspotStatusEndpoint:
+    """Tests for the hotspot status endpoint."""
+
+    def test_hotspot_status(self, client: TestClient):
+        """GET /api/hotspot/status should return status."""
+        response = client.get("/api/hotspot/status")
+        assert response.status_code == 200
+        data = response.json()
+        assert "running" in data
+
+
+class TestConfigEndpointExtended:
+    """Extended tests for config endpoint edge cases."""
+
+    def test_update_multiple_fields(self, client: TestClient):
+        """POST /api/config should update multiple fields at once."""
+        response = client.post(
+            "/api/config",
+            json={
+                "mac_mode": "fixed",
+                "fixed_character_index": 10,
+            },
+        )
+        assert response.status_code == 200
+
+    def test_update_empty_request(self, client: TestClient):
+        """POST /api/config with empty body should succeed."""
+        response = client.post("/api/config", json={})
+        assert response.status_code == 200
+
+    def test_update_config_invalid_json(self, client: TestClient):
+        """POST /api/config with invalid JSON should fail gracefully."""
+        response = client.post(
+            "/api/config",
+            content="not valid json",
+            headers={"Content-Type": "application/json"},
+        )
+        assert response.status_code == 422  # Unprocessable entity
+
+
+class TestCharacterEndpointsExtended:
+    """Extended tests for character endpoints."""
+
+    def test_list_characters_with_all_filters(self, client: TestClient):
+        """GET /api/characters with combined filters."""
+        # First exclude a character
+        client.post("/api/characters/0/exclude")
+
+        # Now search with filters
+        response = client.get("/api/characters?search=mame&available_only=true")
+        assert response.status_code == 200
+
+    def test_get_character_with_season(self, client: TestClient):
+        """GET /api/characters/{index} should show season if applicable."""
+        # Find a seasonal character (if any)
+        response = client.get("/api/characters")
+        chars = response.json()
+
+        # Look for any character with a season
+        seasonal = [c for c in chars if c.get("season")]
+        if seasonal:
+            char = seasonal[0]
+            response = client.get(f"/api/characters/{char['index']}")
+            assert response.status_code == 200
+            assert "season" in response.json()
+
+
+class TestSSIDEndpointsExtended:
+    """Extended tests for SSID endpoints."""
+
+    def test_get_ssid_with_notes(self, client: TestClient):
+        """GET /api/ssids/{index} should include notes."""
+        response = client.get("/api/ssids/0")
+        assert response.status_code == 200
+        data = response.json()
+        assert "notes" in data
+
+    def test_list_ssids_with_search(self, client: TestClient):
+        """GET /api/ssids should work (no search param for SSIDs currently)."""
+        response = client.get("/api/ssids")
+        assert response.status_code == 200
+
+
+class TestExclusionIntegration:
+    """Integration tests for exclusion system."""
+
+    def test_exclude_then_check_status(self, client: TestClient):
+        """Excluding characters should update status counts."""
+        # Get initial status
+        initial = client.get("/api/status").json()
+        initial_excluded = initial["excluded_characters"]
+
+        # Exclude a character
+        client.post("/api/characters/0/exclude")
+
+        # Check status updated
+        updated = client.get("/api/status").json()
+        assert updated["excluded_characters"] == initial_excluded + 1
+
+    def test_clear_all_exclusions_clears_both(self, client: TestClient):
+        """DELETE /api/all-exclusions should clear both types."""
+        # Exclude both types
+        client.post("/api/characters/0/exclude")
+        client.post("/api/ssids/0/exclude")
+
+        # Clear all
+        response = client.delete("/api/all-exclusions")
+        assert response.status_code == 200
+
+        # Verify both cleared
+        char_excl = client.get("/api/exclusions").json()
+        ssid_excl = client.get("/api/ssid-exclusions").json()
+
+        assert char_excl["excluded_count"] == 0
+        assert ssid_excl["excluded_count"] == 0
+
+
+class TestStatusSpecialModes:
+    """Tests for status endpoint in different modes."""
+
+    def test_status_special_ssid_mode(self, client: TestClient):
+        """Status should reflect special SSID mode."""
+        # Set to special SSID mode
+        client.post("/api/config", json={"ssid_mode": "special", "special_ssid_index": 0})
+
+        response = client.get("/api/status")
+        assert response.status_code == 200
+        data = response.json()
+        assert "ssid_mode" in data
+        # After setting special, check the status reflects it
+        assert data["ssid_mode"] == "special"
+
+    def test_status_cycle_mode(self, client: TestClient):
+        """Status should work in cycle mode."""
+        client.post("/api/config", json={"mac_mode": "cycle"})
+
+        response = client.get("/api/status")
+        assert response.status_code == 200
+        data = response.json()
+        assert data["mac_mode"] == "cycle"
+
+
+class TestUpcomingCycleMode:
+    """Tests for upcoming endpoint in cycle mode."""
+
+    def test_upcoming_in_cycle_mode(self, client: TestClient):
+        """GET /api/upcoming should return characters in cycle mode."""
+        # Set to cycle mode
+        client.post("/api/config", json={"mac_mode": "cycle"})
+
+        response = client.get("/api/upcoming")
+        assert response.status_code == 200
+        data = response.json()
+        # Should have upcoming characters
+        assert isinstance(data, list)
+
+    def test_upcoming_count_in_cycle_mode(self, client: TestClient):
+        """GET /api/upcoming?count=3 should return limited list."""
+        client.post("/api/config", json={"mac_mode": "cycle"})
+
+        response = client.get("/api/upcoming?count=3")
+        assert response.status_code == 200
+        data = response.json()
+        assert len(data) <= 3
+
+
+class TestCharacterIncludeErrors:
+    """Tests for include endpoint error handling."""
+
+    def test_include_character_already_included(self, client: TestClient):
+        """POST /api/characters/{index}/include on non-excluded should work."""
+        # Include a character that's not excluded
+        response = client.post("/api/characters/0/include")
+        assert response.status_code == 200
+        assert response.json()["status"] == "ok"
+
+    def test_include_ssid_already_included(self, client: TestClient):
+        """POST /api/ssids/{index}/include on non-excluded should work."""
+        response = client.post("/api/ssids/0/include")
+        assert response.status_code == 200
+        assert response.json()["status"] == "ok"
+
+
+class TestDebugEndpointComplete:
+    """Comprehensive tests for debug endpoint."""
+
+    def test_debug_info_all_fields(self, client: TestClient):
+        """GET /api/debug should return complete debug info."""
+        response = client.get("/api/debug")
+        assert response.status_code == 200
+        data = response.json()
+
+        # Check all expected sections exist
+        assert "config" in data
+        assert "selection" in data
+        assert "exclusions" in data
+        assert "system" in data
+        assert "processes" in data
+        assert "network" in data
+        assert "services" in data
+
+    def test_debug_selection_info(self, client: TestClient):
+        """Debug selection info should be populated."""
+        response = client.get("/api/debug")
+        data = response.json()
+
+        selection = data["selection"]
+        # Should have character info
+        assert isinstance(selection, dict)
+        assert "character_name" in selection
+        assert "is_special_ssid" in selection
+
+    def test_debug_exclusions_info(self, client: TestClient):
+        """Debug exclusions info should have counts."""
+        response = client.get("/api/debug")
+        data = response.json()
+
+        exclusions = data["exclusions"]
+        assert "excluded_character_count" in exclusions
+        assert "excluded_ssid_count" in exclusions
