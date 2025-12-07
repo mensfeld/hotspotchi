@@ -45,6 +45,7 @@ class HotspotManager:
         self._hostapd_config: Optional[Path] = None
         self._dnsmasq_config: Optional[Path] = None
         self._original_mac: Optional[str] = None
+        self._virtual_interface_created: bool = False
 
     def check_root(self) -> bool:
         """Check if running as root."""
@@ -57,11 +58,117 @@ class HotspotManager:
             List of missing dependencies (empty if all present)
         """
         required = ["hostapd", "dnsmasq", "ip", "rfkill"]
+        # Concurrent mode requires iw for interface management
+        if self.config.concurrent_mode:
+            required.append("iw")
         missing = []
         for tool in required:
             if shutil.which(tool) is None:
                 missing.append(tool)
         return missing
+
+    @staticmethod
+    def check_concurrent_support(wifi_interface: str = "wlan0") -> tuple[bool, str]:
+        """Check if the WiFi chipset supports concurrent AP mode.
+
+        This checks if the interface can run AP mode alongside station mode.
+
+        Args:
+            wifi_interface: WiFi interface to check
+
+        Returns:
+            Tuple of (supported, message)
+        """
+        if shutil.which("iw") is None:
+            return False, "iw command not found. Install with: sudo apt install iw"
+
+        # Check if interface exists
+        if not Path(f"/sys/class/net/{wifi_interface}").exists():
+            return False, f"Interface {wifi_interface} not found"
+
+        # Check interface capabilities
+        result = subprocess.run(
+            "iw phy phy0 info 2>/dev/null | grep -A 10 'valid interface combinations'",
+            shell=True,
+            capture_output=True,
+            text=True,
+        )
+
+        if result.returncode != 0 or not result.stdout:
+            return False, "Could not determine WiFi capabilities"
+
+        # Look for AP + managed (station) combination
+        output = result.stdout.lower()
+        if "ap" in output and ("managed" in output or "station" in output):
+            return True, "WiFi chipset supports concurrent AP + Station mode"
+
+        return False, "WiFi chipset may not support concurrent mode"
+
+    def _get_current_channel(self) -> int:
+        """Get the current WiFi channel of the main interface.
+
+        In concurrent mode, the AP must use the same channel as the station.
+
+        Returns:
+            Channel number, or 7 as default
+        """
+        result = self._run_command(f"iw {self.config.wifi_interface} info")
+        if result.returncode == 0:
+            for line in result.stdout.splitlines():
+                if "channel" in line.lower():
+                    # Parse "channel 6 (2437 MHz)" format
+                    parts = line.strip().split()
+                    for i, part in enumerate(parts):
+                        if part.lower() == "channel" and i + 1 < len(parts):
+                            try:
+                                return int(parts[i + 1])
+                            except ValueError:
+                                pass
+        return 7  # Default channel
+
+    def _create_virtual_interface(self) -> bool:
+        """Create virtual AP interface for concurrent mode.
+
+        Returns:
+            True if successful or interface already exists
+        """
+        ap_iface = self.config.ap_interface
+        wifi_iface = self.config.wifi_interface
+
+        # Check if virtual interface already exists
+        if Path(f"/sys/class/net/{ap_iface}").exists():
+            return True
+
+        # Create virtual interface
+        result = self._run_command(
+            f"iw dev {wifi_iface} interface add {ap_iface} type __ap"
+        )
+        if result.returncode != 0:
+            return False
+
+        self._virtual_interface_created = True
+        time.sleep(0.5)
+        return True
+
+    def _remove_virtual_interface(self) -> None:
+        """Remove virtual AP interface."""
+        if not self._virtual_interface_created:
+            return
+
+        ap_iface = self.config.ap_interface
+        self._run_command(f"ip link set {ap_iface} down")
+        self._run_command(f"iw dev {ap_iface} del")
+        self._virtual_interface_created = False
+
+    def _get_effective_interface(self) -> str:
+        """Get the interface to use for the AP.
+
+        Returns:
+            ap_interface in concurrent mode, wifi_interface otherwise
+        """
+        if self.config.concurrent_mode:
+            return self.config.ap_interface
+        return self.config.wifi_interface
 
     def _run_command(
         self,
@@ -85,9 +192,11 @@ class HotspotManager:
             check=False,
         )
 
-    def _get_current_mac(self) -> Optional[str]:
+    def _get_current_mac(self, interface: Optional[str] = None) -> Optional[str]:
         """Get current MAC address of the interface."""
-        path = Path(f"/sys/class/net/{self.config.wifi_interface}/address")
+        if interface is None:
+            interface = self._get_effective_interface()
+        path = Path(f"/sys/class/net/{interface}/address")
         try:
             return path.read_text().strip()
         except (FileNotFoundError, PermissionError):
@@ -102,7 +211,7 @@ class HotspotManager:
         Returns:
             True if successful
         """
-        interface = self.config.wifi_interface
+        interface = self._get_effective_interface()
 
         # Bring interface down
         self._run_command(f"ip link set {interface} down")
@@ -140,11 +249,16 @@ class HotspotManager:
         Returns:
             Path to temporary config file
         """
-        config = f"""interface={self.config.wifi_interface}
+        interface = self._get_effective_interface()
+
+        # In concurrent mode, must use same channel as station
+        channel = self._get_current_channel() if self.config.concurrent_mode else 7
+
+        config = f"""interface={interface}
 driver=nl80211
 ssid={ssid}
 hw_mode=g
-channel=7
+channel={channel}
 wmm_enabled=0
 macaddr_acl=0
 auth_algs=1
@@ -171,7 +285,8 @@ rsn_pairwise=CCMP
         Returns:
             Path to temporary config file
         """
-        config = f"""interface={self.config.wifi_interface}
+        interface = self._get_effective_interface()
+        config = f"""interface={interface}
 dhcp-range={self.config.dhcp_range_start},{self.config.dhcp_range_end},{self.config.ap_netmask},24h
 """
 
@@ -193,7 +308,7 @@ dhcp-range={self.config.dhcp_range_start},{self.config.dhcp_range_end},{self.con
 
     def _configure_interface(self) -> None:
         """Configure IP address on interface."""
-        interface = self.config.wifi_interface
+        interface = self._get_effective_interface()
         self._run_command(f"ip addr flush dev {interface}")
         self._run_command(f"ip addr add {self.config.ap_ip}/24 dev {interface}")
         self._run_command(f"ip link set {interface} up")
@@ -218,8 +333,23 @@ dhcp-range={self.config.dhcp_range_start},{self.config.dhcp_range_end},{self.con
         self._stop_conflicting_services()
         self._unblock_wifi()
 
-        # Disable NetworkManager control
-        self._run_command(f"nmcli device set {self.config.wifi_interface} managed no 2>/dev/null")
+        # Handle concurrent mode vs normal mode
+        if self.config.concurrent_mode:
+            # Create virtual AP interface
+            if not self._create_virtual_interface():
+                raise RuntimeError(
+                    f"Failed to create virtual interface {self.config.ap_interface}. "
+                    "Your WiFi chipset may not support concurrent AP mode."
+                )
+            # Don't touch NetworkManager - keep station connection active
+        else:
+            # Normal mode: disable NetworkManager control of the interface
+            self._run_command(
+                f"nmcli device set {self.config.wifi_interface} managed no 2>/dev/null"
+            )
+
+        # Get effective interface for AP
+        ap_interface = self._get_effective_interface()
 
         # Get SSID and character info
         ssid, special_char = resolve_ssid(self.config)
@@ -230,7 +360,7 @@ dhcp-range={self.config.dhcp_range_start},{self.config.dhcp_range_end},{self.con
         char_name = special_char  # Special char takes precedence
 
         if character:
-            self._original_mac = self._get_current_mac()
+            self._original_mac = self._get_current_mac(ap_interface)
             mac_address = create_mac_address(character)
             if not self._set_mac_address(mac_address):
                 mac_address = None  # Failed to set, will use default
@@ -241,7 +371,7 @@ dhcp-range={self.config.dhcp_range_start},{self.config.dhcp_range_end},{self.con
                 char_name = character.name
 
         # Bring interface up
-        self._run_command(f"ip link set {self.config.wifi_interface} up")
+        self._run_command(f"ip link set {ap_interface} up")
 
         # Configure IP
         self._configure_interface()
@@ -284,6 +414,8 @@ dhcp-range={self.config.dhcp_range_start},{self.config.dhcp_range_end},{self.con
 
     def stop(self) -> None:
         """Stop the WiFi access point and restore original state."""
+        ap_interface = self._get_effective_interface()
+
         # Stop processes
         if self._hostapd_process:
             self._hostapd_process.terminate()
@@ -301,13 +433,11 @@ dhcp-range={self.config.dhcp_range_start},{self.config.dhcp_range_end},{self.con
                 self._dnsmasq_process.kill()
             self._dnsmasq_process = None
 
-        # Restore original MAC
+        # Restore original MAC (only if we changed it)
         if self._original_mac:
-            self._run_command(f"ip link set {self.config.wifi_interface} down")
-            self._run_command(
-                f"ip link set {self.config.wifi_interface} address {self._original_mac}"
-            )
-            self._run_command(f"ip link set {self.config.wifi_interface} up")
+            self._run_command(f"ip link set {ap_interface} down")
+            self._run_command(f"ip link set {ap_interface} address {self._original_mac}")
+            self._run_command(f"ip link set {ap_interface} up")
             self._original_mac = None
 
         # Clean up config files
@@ -318,8 +448,13 @@ dhcp-range={self.config.dhcp_range_start},{self.config.dhcp_range_end},{self.con
         self._hostapd_config = None
         self._dnsmasq_config = None
 
-        # Restart NetworkManager
-        self._run_command("systemctl restart NetworkManager 2>/dev/null")
+        # Handle cleanup based on mode
+        if self.config.concurrent_mode:
+            # Remove virtual interface
+            self._remove_virtual_interface()
+        else:
+            # Restart NetworkManager to restore normal WiFi
+            self._run_command("systemctl restart NetworkManager 2>/dev/null")
 
     def is_running(self) -> bool:
         """Check if hotspot is currently running."""

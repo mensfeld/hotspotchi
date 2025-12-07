@@ -63,6 +63,16 @@ class HotSpotchiConfig(BaseModel):
         description="WiFi interface to use for the access point",
     )
 
+    # Concurrent mode - run AP alongside station connection
+    concurrent_mode: bool = Field(
+        default=False,
+        description="Create virtual AP interface while staying connected to WiFi",
+    )
+    ap_interface: str = Field(
+        default="uap0",
+        description="Virtual AP interface name for concurrent mode",
+    )
+
     # SSID configuration
     ssid_mode: SsidMode = Field(
         default=SsidMode.NORMAL,

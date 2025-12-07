@@ -49,6 +49,77 @@ check_root() {
     fi
 }
 
+# Show warning and get confirmation
+show_warning() {
+    echo ""
+    print_msg "$YELLOW" "============================================"
+    print_msg "$YELLOW" "  ⚠️  IMPORTANT WARNING"
+    print_msg "$YELLOW" "============================================"
+    echo ""
+    echo "HotSpotchi creates a WiFi hotspot that TAKES OVER your"
+    echo "WiFi interface (wlan0). This means:"
+    echo ""
+    echo "  • Your Pi will DISCONNECT from your home WiFi"
+    echo "  • You will LOSE SSH access if connected via WiFi"
+    echo "  • The Pi may appear to 'hang' (it's just unreachable)"
+    echo ""
+    echo "To maintain remote access while running the hotspot:"
+    echo "  1. Connect your Pi via Ethernet cable, OR"
+    echo "  2. Use a second USB WiFi adapter, OR"
+    echo "  3. Enable 'concurrent mode' (if your Pi supports it)"
+    echo ""
+    read -p "Do you understand and want to continue? (y/N) " -n 1 -r
+    echo
+    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+        echo "Installation cancelled."
+        exit 0
+    fi
+}
+
+# Check for concurrent mode support
+check_concurrent_support() {
+    print_step "Checking concurrent mode support..."
+
+    if ! command -v iw &> /dev/null; then
+        apt-get install -y iw > /dev/null 2>&1
+    fi
+
+    # Check if chipset supports AP + Station simultaneously
+    local support_info
+    support_info=$(iw phy phy0 info 2>/dev/null | grep -A 10 'valid interface combinations' || true)
+
+    if echo "$support_info" | grep -qi "ap" && echo "$support_info" | grep -qi "managed"; then
+        print_msg "$GREEN" "  ✓ Your WiFi chipset supports concurrent mode!"
+        echo "    This means you can run the hotspot while staying"
+        echo "    connected to your home WiFi network."
+        echo ""
+        CONCURRENT_SUPPORTED=true
+    else
+        print_msg "$YELLOW" "  ✗ Concurrent mode not detected"
+        echo "    You'll need Ethernet or a second WiFi adapter"
+        echo "    to maintain SSH access while hotspot runs."
+        echo ""
+        CONCURRENT_SUPPORTED=false
+    fi
+}
+
+# Ask about concurrent mode
+configure_concurrent_mode() {
+    if [[ "$CONCURRENT_SUPPORTED" != "true" ]]; then
+        return
+    fi
+
+    echo ""
+    read -p "Enable concurrent mode? (recommended if you don't have Ethernet) (Y/n) " -n 1 -r
+    echo
+    if [[ ! $REPLY =~ ^[Nn]$ ]]; then
+        ENABLE_CONCURRENT=true
+        print_msg "$GREEN" "  Concurrent mode will be enabled"
+    else
+        ENABLE_CONCURRENT=false
+    fi
+}
+
 # Check for required commands
 check_dependencies() {
     print_step "Checking dependencies..."
@@ -151,12 +222,16 @@ create_default_config() {
     print_step "Creating default configuration..."
 
     if [[ ! -f "$CONFIG_DIR/config.yaml" ]]; then
-        cat > "$CONFIG_DIR/config.yaml" << 'EOF'
+        cat > "$CONFIG_DIR/config.yaml" << EOF
 # HotSpotchi Configuration
 # See documentation for all options
 
 # WiFi interface (usually wlan0 on Raspberry Pi)
 wifi_interface: wlan0
+
+# Concurrent mode: run hotspot while staying connected to home WiFi
+# Requires compatible WiFi chipset (Pi 3B+/4/5 typically support this)
+concurrent_mode: ${ENABLE_CONCURRENT:-false}
 
 # SSID mode: normal, special, or custom
 ssid_mode: normal
@@ -178,6 +253,15 @@ EOF
         echo "  Created $CONFIG_DIR/config.yaml"
     else
         echo "  Config file already exists, skipping"
+        # If concurrent mode was selected, update existing config
+        if [[ "$ENABLE_CONCURRENT" == "true" ]]; then
+            if grep -q "concurrent_mode:" "$CONFIG_DIR/config.yaml"; then
+                sed -i 's/concurrent_mode:.*/concurrent_mode: true/' "$CONFIG_DIR/config.yaml"
+            else
+                echo "concurrent_mode: true" >> "$CONFIG_DIR/config.yaml"
+            fi
+            echo "  Updated concurrent_mode in existing config"
+        fi
     fi
 }
 
@@ -253,15 +337,24 @@ print_completion() {
     print_msg "$GREEN" "  HotSpotchi installed successfully!"
     print_msg "$GREEN" "============================================"
     echo ""
-    print_msg "$YELLOW" "⚠️  IMPORTANT: Network Access Warning"
-    echo "  Starting the hotspot will take over wlan0!"
-    echo "  If your Pi is connected via WiFi, you will lose SSH access."
-    echo ""
-    echo "  Solutions:"
-    echo "    • Connect via Ethernet BEFORE starting the hotspot"
-    echo "    • Use a second USB WiFi adapter for management"
-    echo "    • Accept physical-only access while hotspot runs"
-    echo ""
+
+    if [[ "$ENABLE_CONCURRENT" == "true" ]]; then
+        print_msg "$GREEN" "✓ Concurrent mode ENABLED"
+        echo "  Your Pi will stay connected to home WiFi while"
+        echo "  running the hotspot. SSH access will be maintained."
+        echo ""
+    else
+        print_msg "$YELLOW" "⚠️  IMPORTANT: Network Access Warning"
+        echo "  Starting the hotspot will take over wlan0!"
+        echo "  If your Pi is connected via WiFi, you will lose SSH access."
+        echo ""
+        echo "  Solutions:"
+        echo "    • Connect via Ethernet BEFORE starting the hotspot"
+        echo "    • Use a second USB WiFi adapter for management"
+        echo "    • Re-run installer to enable concurrent mode"
+        echo ""
+    fi
+
     echo "Quick Start:"
     echo "  1. Edit configuration: sudo nano $CONFIG_DIR/config.yaml"
     echo "  2. Test manually:      sudo hotspotchi start"
@@ -292,7 +385,10 @@ main() {
     print_msg "$GREEN" "============================================"
 
     check_root
+    show_warning
     check_dependencies
+    check_concurrent_support
+    configure_concurrent_mode
     install_system_packages
     create_directories
     install_python_package

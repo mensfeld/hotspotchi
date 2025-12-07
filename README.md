@@ -171,6 +171,10 @@ Edit `/etc/hotspotchi/config.yaml`:
 # WiFi interface (usually wlan0 on Raspberry Pi)
 wifi_interface: wlan0
 
+# Concurrent mode: run hotspot while staying connected to home WiFi
+# Requires compatible WiFi chipset (Pi 3B+/4/5 typically support this)
+concurrent_mode: false
+
 # SSID mode: normal, special, or custom
 ssid_mode: normal
 default_ssid: HotSpotchi
@@ -362,6 +366,36 @@ sudo systemctl disable hotspotchi
 sudo nmcli device wifi connect "YourNetworkSSID" password "YourPassword"
 # Or reboot the Pi
 sudo reboot
+```
+
+### Concurrent Mode (Recommended for Pi 3B+/4/5)
+
+If you have a Raspberry Pi 3B+, 4, or 5, you can enable **concurrent mode** to run the hotspot while staying connected to your home WiFi. This way you keep SSH access and internet connectivity.
+
+**Enable during installation:**
+The installer will detect if your Pi supports concurrent mode and offer to enable it.
+
+**Enable manually:**
+```yaml
+# /etc/hotspotchi/config.yaml
+concurrent_mode: true
+```
+
+**How it works:**
+- Creates a virtual AP interface (uap0) from your WiFi chip
+- Main interface (wlan0) stays connected to your router
+- Both interfaces share the same WiFi channel
+- The Tamagotchi hotspot runs on the virtual interface
+
+**Limitations:**
+- Both networks must use the same WiFi channel (handled automatically)
+- Some performance reduction due to channel sharing
+- May not work on all WiFi chipsets
+
+**Check if your Pi supports it:**
+```bash
+iw phy phy0 info | grep -A 10 "valid interface combinations"
+# Look for lines showing "AP" and "managed" together
 ```
 
 ### WiFi not appearing
