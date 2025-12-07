@@ -105,7 +105,7 @@ def start(
             click.echo(f"Warning: Config file {config_path} not found, using defaults")
 
     # Override with command-line options
-    overrides = {}
+    overrides: dict[str, object] = {}
     if mac_mode is not None:
         overrides["mac_mode"] = MacMode(mac_mode)
     if ssid_mode is not None:

@@ -17,9 +17,8 @@ from hotspotchi.mac import create_mac_address, format_mac
 from hotspotchi.selection import (
     get_seconds_until_midnight,
     get_upcoming_characters,
-    select_character,
+    select_combined,
 )
-from hotspotchi.ssid import resolve_ssid
 
 router = APIRouter()
 
@@ -109,11 +108,22 @@ async def get_status() -> StatusResponse:
     manager = _get_hotspot_manager()
     exclusion_manager = get_exclusion_manager()
 
-    ssid, special_char = resolve_ssid(config)
-    character = select_character(config)
+    # Use combined selection which includes special SSIDs in the rotation
+    selection = select_combined(config)
 
-    mac_address = format_mac(create_mac_address(character)) if character else None
-    char_name = special_char or (character.name if character else None)
+    # Determine SSID, MAC, and character name based on selection
+    if selection.is_special_ssid:
+        ssid = selection.ssid or config.default_ssid
+        mac_address = None
+        char_name = selection.name
+    elif selection.character:
+        ssid = config.default_ssid
+        mac_address = format_mac(create_mac_address(selection.character))
+        char_name = selection.character.name
+    else:
+        ssid = config.default_ssid
+        mac_address = None
+        char_name = None
 
     # Calculate next change time for daily mode
     next_change = None

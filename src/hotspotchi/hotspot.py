@@ -357,7 +357,7 @@ dhcp-range={self.config.dhcp_range_start},{self.config.dhcp_range_end},{self.con
 
         if selection.is_special_ssid:
             # Special SSID selected - use special SSID name, no MAC change needed
-            ssid = selection.ssid
+            ssid = selection.ssid or self.config.default_ssid
             char_name = selection.name
         elif selection.character:
             # MAC character selected - use default SSID, spoof MAC
@@ -517,7 +517,7 @@ dhcp-range={self.config.dhcp_range_start},{self.config.dhcp_range_end},{self.con
         selection = select_combined(self.config)
 
         if selection.is_special_ssid:
-            ssid = selection.ssid
+            ssid = selection.ssid or self.config.default_ssid
             char_name = selection.name
             mac_address = None
         elif selection.character:
