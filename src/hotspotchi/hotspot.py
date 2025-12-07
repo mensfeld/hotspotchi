@@ -159,13 +159,14 @@ class HotspotManager:
         return True
 
     def _remove_virtual_interface(self) -> None:
-        """Remove virtual AP interface."""
-        if not self._virtual_interface_created:
-            return
-
+        """Remove virtual AP interface if it exists."""
         ap_iface = self.config.ap_interface
-        self._run_command(f"ip link set {ap_iface} down")
-        self._run_command(f"iw dev {ap_iface} del")
+
+        # Remove interface if it exists (regardless of who created it)
+        if Path(f"/sys/class/net/{ap_iface}").exists():
+            self._run_command(f"ip link set {ap_iface} down")
+            self._run_command(f"iw dev {ap_iface} del")
+
         self._virtual_interface_created = False
 
     def _get_effective_interface(self) -> str:
@@ -435,7 +436,7 @@ dhcp-range={self.config.dhcp_range_start},{self.config.dhcp_range_end},{self.con
         """Stop the WiFi access point and restore original state."""
         ap_interface = self._get_effective_interface()
 
-        # Stop processes
+        # Stop our own processes if we have them
         if self._hostapd_process:
             self._hostapd_process.terminate()
             try:
@@ -451,6 +452,10 @@ dhcp-range={self.config.dhcp_range_start},{self.config.dhcp_range_end},{self.con
             except subprocess.TimeoutExpired:
                 self._dnsmasq_process.kill()
             self._dnsmasq_process = None
+
+        # Also kill any system-wide hostapd/dnsmasq (for cross-process restart)
+        self._run_command("pkill -x hostapd")
+        self._run_command("pkill -x dnsmasq")
 
         # Restore original MAC (only if we changed it)
         if self._original_mac:
