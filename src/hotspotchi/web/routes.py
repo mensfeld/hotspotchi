@@ -72,19 +72,31 @@ def _restart_via_systemd() -> bool:
 
 
 def _save_current_config() -> None:
-    """Save current config to the config file."""
+    """Save current config to the config file, preserving existing settings."""
     import yaml
 
     config_path = Path("/etc/hotspotchi/config.yaml")
-    config_data = _current_config.model_dump()
 
-    # Convert enums to strings
-    for key, value in config_data.items():
-        if hasattr(value, "value"):
-            config_data[key] = value.value
+    # Read existing config to preserve settings we don't manage
+    existing_config = {}
+    if config_path.exists():
+        with open(config_path) as f:
+            existing_config = yaml.safe_load(f) or {}
+
+    # Only update the fields that the web UI manages
+    # (character selection, SSID mode, etc.)
+    updates = {
+        "mac_mode": _current_config.mac_mode.value,
+        "ssid_mode": _current_config.ssid_mode.value,
+        "fixed_character_index": _current_config.fixed_character_index,
+        "special_ssid_index": _current_config.special_ssid_index,
+    }
+
+    # Merge updates into existing config
+    existing_config.update(updates)
 
     with open(config_path, "w") as f:
-        yaml.safe_dump(config_data, f, default_flow_style=False)
+        yaml.safe_dump(existing_config, f, default_flow_style=False)
 
 
 def _is_root() -> bool:
