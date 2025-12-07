@@ -5,6 +5,8 @@
 - [Fix] Fix web UI character selection - now restarts via systemd service to avoid process conflicts
 - [Fix] Web UI saves config to file before restart so CLI picks up new settings
 - [Fix] Only kill hotspotchi-specific dnsmasq processes, not system DNS
+- [Fix] Preserve existing config settings (like concurrent_mode) when saving - don't overwrite entire file
+- [Fix] Set mac_mode to "fixed" when selecting a character (was only setting character index)
 
 ## 2.2.4 (2025-12-07)
 
