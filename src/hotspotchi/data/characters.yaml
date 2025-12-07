@@ -1,0 +1,427 @@
+# HotSpotchi Character Database
+# ==============================
+#
+# This file contains all characters for Tamagotchi Uni's Tama Search feature.
+# You can add new characters by following the format below.
+#
+# MAC-based characters use byte values (0-255) to determine the character.
+# The MAC address format is: 02:7A:6D:A0:XX:YY where XX=byte1, YY=byte2
+#
+# Special SSID characters are triggered by the WiFi network name.
+
+# ============================================
+# MAC-BASED CHARACTERS
+# ============================================
+# Format:
+#   - byte1: First byte (0-255, can use hex like 0x00)
+#     byte2: Second byte (0-255)
+#     name: Character display name
+#     season: Optional - "spring", "summer", "fall", or "winter"
+
+characters:
+  # Common characters (available year-round)
+  - byte1: 0x00
+    byte2: 0x00
+    name: Mametchi
+
+  - byte1: 0x00
+    byte2: 0x10
+    name: Weeptchi
+
+  - byte1: 0x00
+    byte2: 0x20
+    name: Hypertchi
+
+  - byte1: 0x00
+    byte2: 0x30
+    name: Kuchipatchi
+
+  - byte1: 0x00
+    byte2: 0x40
+    name: Shykutchi
+
+  - byte1: 0x00
+    byte2: 0x50
+    name: Bigsmile
+
+  - byte1: 0x00
+    byte2: 0x60
+    name: Kikitchi
+
+  - byte1: 0x00
+    byte2: 0x70
+    name: Simagurutchi
+
+  - byte1: 0x00
+    byte2: 0x80
+    name: Gozarutchi
+
+  - byte1: 0x00
+    byte2: 0x90
+    name: Milktchi
+
+  - byte1: 0x00
+    byte2: 0xA0
+    name: Mimitchi
+
+  - byte1: 0x00
+    byte2: 0xB0
+    name: Picochutchi
+
+  - byte1: 0x00
+    byte2: 0xC0
+    name: Memetchi
+
+  - byte1: 0x00
+    byte2: 0xD0
+    name: Bubbletchi
+
+  - byte1: 0x00
+    byte2: 0xE0
+    name: Woopatchi
+
+  - byte1: 0x00
+    byte2: 0xF0
+    name: Neliatchi
+
+  - byte1: 0x01
+    byte2: 0x00
+    name: Sebiretchi
+
+  - byte1: 0x01
+    byte2: 0x10
+    name: Momotchi
+
+  - byte1: 0x01
+    byte2: 0x20
+    name: Unimarutchi
+
+  - byte1: 0x01
+    byte2: 0x30
+    name: Simasimatchi
+
+  - byte1: 0x01
+    byte2: 0x40
+    name: Yattatchi
+
+  - byte1: 0x01
+    byte2: 0x50
+    name: Nazotchi
+
+  - byte1: 0x01
+    byte2: 0x60
+    name: Maidtchi
+
+  - byte1: 0x01
+    byte2: 0x70
+    name: Uwasatchi
+
+  - byte1: 0x01
+    byte2: 0x80
+    name: Shirimotchi
+
+  - byte1: 0x01
+    byte2: 0x90
+    name: Chukatchi
+
+  - byte1: 0x01
+    byte2: 0xA0
+    name: Watawatatchi
+
+  - byte1: 0x01
+    byte2: 0xB0
+    name: Crayontchi
+
+  - byte1: 0x01
+    byte2: 0xC0
+    name: Pierrotchi
+
+  - byte1: 0x01
+    byte2: 0xD0
+    name: Majokkotchi
+
+  - byte1: 0x01
+    byte2: 0xE0
+    name: Hatakemotchi
+
+  - byte1: 0x01
+    byte2: 0xF0
+    name: Butterflytchi
+
+  - byte1: 0x02
+    byte2: 0x00
+    name: Attendant
+
+  - byte1: 0x02
+    byte2: 0x10
+    name: Maskutchi
+
+  - byte1: 0x02
+    byte2: 0x20
+    name: Ichirinshatchi
+
+  - byte1: 0x02
+    byte2: 0x30
+    name: Nonopotchi
+
+  - byte1: 0x02
+    byte2: 0x40
+    name: Himebaratchi
+
+  - byte1: 0x02
+    byte2: 0x50
+    name: Pichipitchi
+
+  - byte1: 0x02
+    byte2: 0x60
+    name: Youmotchi
+
+  - byte1: 0x02
+    byte2: 0x70
+    name: Fairytchi
+
+  - byte1: 0x02
+    byte2: 0x80
+    name: Majoritchi
+
+  - byte1: 0x02
+    byte2: 0x90
+    name: Madamtchi
+
+  - byte1: 0x02
+    byte2: 0xA0
+    name: Lovesolatchi
+
+  - byte1: 0x02
+    byte2: 0xB0
+    name: Miraitchi
+
+  - byte1: 0x02
+    byte2: 0xC0
+    name: Clulutchi
+
+  - byte1: 0x02
+    byte2: 0xD0
+    name: Morijikatchi
+
+  - byte1: 0x02
+    byte2: 0xE0
+    name: Guriguritchi
+
+  - byte1: 0x02
+    byte2: 0xF0
+    name: Sunopotchi
+
+  - byte1: 0x03
+    byte2: 0x00
+    name: Rinkurutchi
+
+  - byte1: 0x03
+    byte2: 0x10
+    name: Oyajitchi
+
+  - byte1: 0x03
+    byte2: 0x20
+    name: Charatchi
+
+  - byte1: 0x03
+    byte2: 0x30
+    name: Ninjanyatchi
+
+  - byte1: 0x03
+    byte2: 0x40
+    name: Paintotchi
+
+  # ----------------------------------------
+  # Seasonal characters
+  # Set your Tamagotchi's date to the right season!
+  # ----------------------------------------
+
+  # Spring (March-May)
+  - byte1: 0x00
+    byte2: 0x0F
+    name: Rosetchi
+    season: spring
+
+  - byte1: 0x01
+    byte2: 0x0F
+    name: Yotsubatchi
+    season: spring
+
+  - byte1: 0x02
+    byte2: 0x0F
+    name: Hanafuwatchi
+    season: spring
+
+  - byte1: 0x03
+    byte2: 0x0F
+    name: Musiharutchi
+    season: spring
+
+  # Summer (June-August)
+  - byte1: 0x00
+    byte2: 0x1F
+    name: Soyofuwatchi
+    season: summer
+
+  - byte1: 0x01
+    byte2: 0x1F
+    name: Hyurutchi
+    season: summer
+
+  - byte1: 0x02
+    byte2: 0x1F
+    name: Kiramotchi
+    season: summer
+
+  - byte1: 0x03
+    byte2: 0x1F
+    name: Awawatchi
+    season: summer
+
+  # Fall (September-November)
+  - byte1: 0x00
+    byte2: 0x2F
+    name: Momijitchi
+    season: fall
+
+  - byte1: 0x01
+    byte2: 0x2F
+    name: Chestnut Angel
+    season: fall
+
+  - byte1: 0x02
+    byte2: 0x2F
+    name: Ginkgotchi
+    season: fall
+
+  - byte1: 0x03
+    byte2: 0x2F
+    name: Kinokotchi
+    season: fall
+
+  # Winter (December-February)
+  - byte1: 0x00
+    byte2: 0x3F
+    name: Yukinkotchi
+    season: winter
+
+  - byte1: 0x01
+    byte2: 0x3F
+    name: Snowboytchi
+    season: winter
+
+  - byte1: 0x02
+    byte2: 0x3F
+    name: Fuyukotchi
+    season: winter
+
+  - byte1: 0x03
+    byte2: 0x3F
+    name: Yuki Onna
+    season: winter
+
+
+# ============================================
+# SPECIAL SSID CHARACTERS
+# ============================================
+# These are triggered by the WiFi network NAME, not MAC address.
+# Originally exclusive to specific events/locations in Japan.
+#
+# Format:
+#   - ssid: The exact SSID string to broadcast
+#     character_name: Name of the character that appears
+#     notes: Description of where/when this SSID was available
+#     active: true/false - whether this SSID still works (default: true)
+
+special_ssids:
+  # World Tour & Event Exclusives
+  - ssid: FyKHSZlwQCzTpGuDHrJclhA2Kq9vYNdP
+    character_name: Angel & Devil
+    notes: World Tamagotchi Tour event spots
+
+  # Bandai Cross Store Exclusives
+  - ssid: oHWqLZuDba3HjCwemPXc61et9lKpDE60
+    character_name: Makiko
+    notes: Bandai Cross stores
+
+  - ssid: TtKihQXLtUvf8Pg4pPfzgZNm3cMifPW2
+    character_name: Snowmarutchi
+    notes: Bandai Cross stores
+
+  - ssid: BS5nm6JYUGABKZKGFNWEpMM7Vag4qUeB
+    character_name: Manekimimitchi
+    notes: Bandai Cross stores
+
+  # Bandai Namco Cross Store Regional Exclusives
+  - ssid: n1ngVgVtJ6Q4l7HZ3RLbAKI7KdkByZLa
+    character_name: MasamunePatchi
+    notes: Bandai Namco Cross Store - Sendai
+
+  - ssid: S0ccc5tmCxe69la0ff9UEBVy42gDzirG
+    character_name: GirlyMametchi
+    notes: Bandai Namco Cross Store - Koshigaya/Tokyo/SHIBUYA109/Yokohama
+
+  - ssid: XqCIzP70WUOOgmuYJyN71bn39PmOhRXS
+    character_name: WaiterMametchi
+    notes: Bandai Namco Cross Store - Nagoya
+
+  - ssid: bDwg0TAt3bFJvrBUd9Zh4Z71cJ9NbihX
+    character_name: MomKuchipatchi
+    notes: Bandai Namco Cross Store - Osaka Umeda
+
+  - ssid: 4lcA42klr3UlQh3iPafHggFuHwNmQDkA
+    character_name: MentaiMametchi
+    notes: Bandai Namco Cross Store - Hakata
+
+  # Pop-up Store & Event Exclusives
+  - ssid: r71676YmaL7BgMqjQwoU9SVuZGDMRDLK
+    character_name: Youngmametchi
+    notes: Gather, Everyone! Tamagotchi Shop pop-up - Japan
+
+  - ssid: cK4zCzlkZRZZRhQgVev42ghANdfscPGx
+    character_name: 1123 Mametchi
+    notes: Celebrating 28 Years! Tamagotchi Birthday! - Harajuku Harakado
+
+  - ssid: eczNNK2nzEKFuGQuBcf8UvKymLhBFeTQ
+    character_name: atre Memetchi
+    notes: atre x Tamagotchi atre WINTER CARNIVAL event
+
+  - ssid: pQYeFibtVXgJhOtNgDOEXC5ygkjkpJKC
+    character_name: Pochitchi
+    notes: Tamagotchi Shop stores
+
+  - ssid: gCjUrU3DwNsjpIWsh53bDAI2g72KoxL8
+    character_name: Asa&Yorutchi
+    notes: Tamagotchi X PokoPea pop up store
+
+  - ssid: 1xuULYofy8K4yN6h0eCJpZ45qkKJH5cT
+    character_name: Tamako hime
+    notes: Capcom Cafe X Tamagotchi no Puchi Puchi Omisetchi
+
+  - ssid: 4w4AHuUMZw5IJ6n8sGCviXPzO1RZz16g
+    character_name: 20th Yattatchi
+    notes: LACHIC 20th Anniversary X Tamagotchi event
+
+  - ssid: YsDXsevVKDBK1f5xTed6XkYqUrCpazrQ
+    character_name: Factory Tama
+    notes: Tamagotchi Factory store
+
+  # Ciao/Ribon Events
+  - ssid: JuqfEv8zFn8LnJdkUfkCgBRU7YfVf9nG
+    character_name: Milktchi
+    notes: Ciao x Ribon Girls Comic Fest 2024
+
+  - ssid: AYlvLBg6Ex8WoDdmk1AftZ5E3evPhYll
+    character_name: Yumemitchi
+    notes: Ciao x Ribon Girls Comic Fest 2024
+
+  - ssid: QvWG15JJdsaqejxoNr0Iyc9PPtheRHFg
+    character_name: Tamahiko oji
+    notes: Ciao Summer Festival 2025
+
+  # Collaboration Events
+  - ssid: sleVMCdb7AuJJDNBj9CJD9CPPkKdGfib
+    character_name: M Hello Kitty
+    notes: Sanrio Puroland - INACTIVE as of v2.1.0
+    active: false

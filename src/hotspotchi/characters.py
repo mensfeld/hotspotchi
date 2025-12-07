@@ -3,10 +3,15 @@ Character data for HotSpotchi.
 
 Contains all MAC-based characters and special SSID-based event characters
 for Tamagotchi Uni's Tama Search feature.
+
+Characters are loaded from data/characters.yaml for easy customization.
 """
 
 from dataclasses import dataclass
-from typing import Optional
+from pathlib import Path
+from typing import Optional, Union
+
+import yaml
 
 
 @dataclass(frozen=True)
@@ -51,210 +56,60 @@ class SpecialSSID:
     active: bool = True
 
 
-# ============================================
-# NORMAL CHARACTERS (MAC address based)
-# ============================================
-# The final two bytes of the MAC address determine which character appears.
-# MAC format: 02:7A:6D:A0:XX:YY where XX=byte1, YY=byte2
+def _parse_byte(value: Union[int, str]) -> int:
+    """Parse a byte value from YAML (handles hex strings like '0x00')."""
+    if isinstance(value, int):
+        return value
+    if isinstance(value, str) and value.startswith("0x"):
+        return int(value, 16)
+    return int(value)
 
-CHARACTERS: tuple[Character, ...] = (
-    # Common characters (available year-round)
-    Character(0x00, 0x00, "Mametchi"),
-    Character(0x00, 0x10, "Weeptchi"),
-    Character(0x00, 0x20, "Hypertchi"),
-    Character(0x00, 0x30, "Kuchipatchi"),
-    Character(0x00, 0x40, "Shykutchi"),
-    Character(0x00, 0x50, "Bigsmile"),
-    Character(0x00, 0x60, "Kikitchi"),
-    Character(0x00, 0x70, "Simagurutchi"),
-    Character(0x00, 0x80, "Gozarutchi"),
-    Character(0x00, 0x90, "Milktchi"),
-    Character(0x00, 0xA0, "Mimitchi"),
-    Character(0x00, 0xB0, "Picochutchi"),
-    Character(0x00, 0xC0, "Memetchi"),
-    Character(0x00, 0xD0, "Bubbletchi"),
-    Character(0x00, 0xE0, "Woopatchi"),
-    Character(0x00, 0xF0, "Neliatchi"),
-    Character(0x01, 0x00, "Sebiretchi"),
-    Character(0x01, 0x10, "Momotchi"),
-    Character(0x01, 0x20, "Unimarutchi"),
-    Character(0x01, 0x30, "Simasimatchi"),
-    Character(0x01, 0x40, "Yattatchi"),
-    Character(0x01, 0x50, "Nazotchi"),
-    Character(0x01, 0x60, "Maidtchi"),
-    Character(0x01, 0x70, "Uwasatchi"),
-    Character(0x01, 0x80, "Shirimotchi"),
-    Character(0x01, 0x90, "Chukatchi"),
-    Character(0x01, 0xA0, "Watawatatchi"),
-    Character(0x01, 0xB0, "Crayontchi"),
-    Character(0x01, 0xC0, "Pierrotchi"),
-    Character(0x01, 0xD0, "Majokkotchi"),
-    Character(0x01, 0xE0, "Hatakemotchi"),
-    Character(0x01, 0xF0, "Butterflytchi"),
-    Character(0x02, 0x00, "Attendant"),
-    Character(0x02, 0x10, "Maskutchi"),
-    Character(0x02, 0x20, "Ichirinshatchi"),
-    Character(0x02, 0x30, "Nonopotchi"),
-    Character(0x02, 0x40, "Himebaratchi"),
-    Character(0x02, 0x50, "Pichipitchi"),
-    Character(0x02, 0x60, "Youmotchi"),
-    Character(0x02, 0x70, "Fairytchi"),
-    Character(0x02, 0x80, "Majoritchi"),
-    Character(0x02, 0x90, "Madamtchi"),
-    Character(0x02, 0xA0, "Lovesolatchi"),
-    Character(0x02, 0xB0, "Miraitchi"),
-    Character(0x02, 0xC0, "Clulutchi"),
-    Character(0x02, 0xD0, "Morijikatchi"),
-    Character(0x02, 0xE0, "Guriguritchi"),
-    Character(0x02, 0xF0, "Sunopotchi"),
-    Character(0x03, 0x00, "Rinkurutchi"),
-    Character(0x03, 0x10, "Oyajitchi"),
-    Character(0x03, 0x20, "Charatchi"),
-    Character(0x03, 0x30, "Ninjanyatchi"),
-    Character(0x03, 0x40, "Paintotchi"),
-    # Seasonal characters - set your Tamagotchi's date to the right season!
-    # Spring (March-May)
-    Character(0x00, 0x0F, "Rosetchi", season="spring"),
-    Character(0x01, 0x0F, "Yotsubatchi", season="spring"),
-    Character(0x02, 0x0F, "Hanafuwatchi", season="spring"),
-    Character(0x03, 0x0F, "Musiharutchi", season="spring"),
-    # Summer (June-August)
-    Character(0x00, 0x1F, "Soyofuwatchi", season="summer"),
-    Character(0x01, 0x1F, "Hyurutchi", season="summer"),
-    Character(0x02, 0x1F, "Kiramotchi", season="summer"),
-    Character(0x03, 0x1F, "Awawatchi", season="summer"),
-    # Fall (September-November)
-    Character(0x00, 0x2F, "Momijitchi", season="fall"),
-    Character(0x01, 0x2F, "Chestnut Angel", season="fall"),
-    Character(0x02, 0x2F, "Ginkgotchi", season="fall"),
-    Character(0x03, 0x2F, "Kinokotchi", season="fall"),
-    # Winter (December-February)
-    Character(0x00, 0x3F, "Yukinkotchi", season="winter"),
-    Character(0x01, 0x3F, "Snowboytchi", season="winter"),
-    Character(0x02, 0x3F, "Fuyukotchi", season="winter"),
-    Character(0x03, 0x3F, "Yuki Onna", season="winter"),
-)
 
-# ============================================
-# SPECIAL CHARACTERS (SSID-based)
-# ============================================
-# These are triggered by the WiFi network NAME, not MAC address.
-# Originally exclusive to specific events/locations in Japan.
+def _load_characters_from_yaml() -> tuple[tuple[Character, ...], tuple[SpecialSSID, ...]]:
+    """Load characters from the YAML data file.
 
-SPECIAL_SSIDS: tuple[SpecialSSID, ...] = (
-    # World Tour & Event Exclusives
-    SpecialSSID(
-        ssid="FyKHSZlwQCzTpGuDHrJclhA2Kq9vYNdP",
-        character_name="Angel & Devil",
-        notes="World Tamagotchi Tour event spots",
-    ),
-    # Bandai Cross Store Exclusives
-    SpecialSSID(
-        ssid="oHWqLZuDba3HjCwemPXc61et9lKpDE60",
-        character_name="Makiko",
-        notes="Bandai Cross stores",
-    ),
-    SpecialSSID(
-        ssid="TtKihQXLtUvf8Pg4pPfzgZNm3cMifPW2",
-        character_name="Snowmarutchi",
-        notes="Bandai Cross stores",
-    ),
-    SpecialSSID(
-        ssid="BS5nm6JYUGABKZKGFNWEpMM7Vag4qUeB",
-        character_name="Manekimimitchi",
-        notes="Bandai Cross stores",
-    ),
-    # Bandai Namco Cross Store Regional Exclusives
-    SpecialSSID(
-        ssid="n1ngVgVtJ6Q4l7HZ3RLbAKI7KdkByZLa",
-        character_name="MasamunePatchi",
-        notes="Bandai Namco Cross Store - Sendai",
-    ),
-    SpecialSSID(
-        ssid="S0ccc5tmCxe69la0ff9UEBVy42gDzirG",
-        character_name="GirlyMametchi",
-        notes="Bandai Namco Cross Store - Koshigaya/Tokyo/SHIBUYA109/Yokohama",
-    ),
-    SpecialSSID(
-        ssid="XqCIzP70WUOOgmuYJyN71bn39PmOhRXS",
-        character_name="WaiterMametchi",
-        notes="Bandai Namco Cross Store - Nagoya",
-    ),
-    SpecialSSID(
-        ssid="bDwg0TAt3bFJvrBUd9Zh4Z71cJ9NbihX",
-        character_name="MomKuchipatchi",
-        notes="Bandai Namco Cross Store - Osaka Umeda",
-    ),
-    SpecialSSID(
-        ssid="4lcA42klr3UlQh3iPafHggFuHwNmQDkA",
-        character_name="MentaiMametchi",
-        notes="Bandai Namco Cross Store - Hakata",
-    ),
-    # Pop-up Store & Event Exclusives
-    SpecialSSID(
-        ssid="r71676YmaL7BgMqjQwoU9SVuZGDMRDLK",
-        character_name="Youngmametchi",
-        notes="Gather, Everyone! Tamagotchi Shop pop-up - Japan",
-    ),
-    SpecialSSID(
-        ssid="cK4zCzlkZRZZRhQgVev42ghANdfscPGx",
-        character_name="1123 Mametchi",
-        notes="Celebrating 28 Years! Tamagotchi Birthday! - Harajuku Harakado",
-    ),
-    SpecialSSID(
-        ssid="eczNNK2nzEKFuGQuBcf8UvKymLhBFeTQ",
-        character_name="atre Memetchi",
-        notes="atre x Tamagotchi atre WINTER CARNIVAL event",
-    ),
-    SpecialSSID(
-        ssid="pQYeFibtVXgJhOtNgDOEXC5ygkjkpJKC",
-        character_name="Pochitchi",
-        notes="Tamagotchi Shop stores",
-    ),
-    SpecialSSID(
-        ssid="gCjUrU3DwNsjpIWsh53bDAI2g72KoxL8",
-        character_name="Asa&Yorutchi",
-        notes="Tamagotchi X PokoPea pop up store",
-    ),
-    SpecialSSID(
-        ssid="1xuULYofy8K4yN6h0eCJpZ45qkKJH5cT",
-        character_name="Tamako hime",
-        notes="Capcom Cafe X Tamagotchi no Puchi Puchi Omisetchi",
-    ),
-    SpecialSSID(
-        ssid="4w4AHuUMZw5IJ6n8sGCviXPzO1RZz16g",
-        character_name="20th Yattatchi",
-        notes="LACHIC 20th Anniversary X Tamagotchi event",
-    ),
-    SpecialSSID(
-        ssid="YsDXsevVKDBK1f5xTed6XkYqUrCpazrQ",
-        character_name="Factory Tama",
-        notes="Tamagotchi Factory store",
-    ),
-    # Ciao/Ribon Events
-    SpecialSSID(
-        ssid="JuqfEv8zFn8LnJdkUfkCgBRU7YfVf9nG",
-        character_name="Milktchi",
-        notes="Ciao x Ribon Girls Comic Fest 2024",
-    ),
-    SpecialSSID(
-        ssid="AYlvLBg6Ex8WoDdmk1AftZ5E3evPhYll",
-        character_name="Yumemitchi",
-        notes="Ciao x Ribon Girls Comic Fest 2024",
-    ),
-    SpecialSSID(
-        ssid="QvWG15JJdsaqejxoNr0Iyc9PPtheRHFg",
-        character_name="Tamahiko oji",
-        notes="Ciao Summer Festival 2025",
-    ),
-    # Collaboration Events
-    SpecialSSID(
-        ssid="sleVMCdb7AuJJDNBj9CJD9CPPkKdGfib",
-        character_name="M Hello Kitty",
-        notes="Sanrio Puroland - INACTIVE as of v2.1.0",
-        active=False,
-    ),
-)
+    Returns:
+        Tuple of (characters, special_ssids)
+    """
+    # Find the YAML file relative to this module
+    data_file = Path(__file__).parent / "data" / "characters.yaml"
+
+    if not data_file.exists():
+        # Fallback to empty if file doesn't exist (shouldn't happen in production)
+        return ((), ())
+
+    with open(data_file) as f:
+        data = yaml.safe_load(f)
+
+    # Parse characters
+    characters = []
+    for char_data in data.get("characters", []):
+        characters.append(
+            Character(
+                byte1=_parse_byte(char_data["byte1"]),
+                byte2=_parse_byte(char_data["byte2"]),
+                name=char_data["name"],
+                season=char_data.get("season"),
+            )
+        )
+
+    # Parse special SSIDs
+    special_ssids = []
+    for ssid_data in data.get("special_ssids", []):
+        special_ssids.append(
+            SpecialSSID(
+                ssid=ssid_data["ssid"],
+                character_name=ssid_data["character_name"],
+                notes=ssid_data["notes"],
+                active=ssid_data.get("active", True),
+            )
+        )
+
+    return (tuple(characters), tuple(special_ssids))
+
+
+# Load characters at module import time
+CHARACTERS, SPECIAL_SSIDS = _load_characters_from_yaml()
 
 
 def get_character_by_name(name: str) -> Optional[Character]:

@@ -65,6 +65,14 @@ Issues = "https://github.com/mensfeld/hotspotchi/issues"
 [tool.hatch.build.targets.wheel]
 packages = ["src/hotspotchi"]
 
+[tool.hatch.build.targets.sdist]
+include = [
+    "src/hotspotchi/**/*.py",
+    "src/hotspotchi/**/*.yaml",
+    "src/hotspotchi/web/static/**/*",
+    "src/hotspotchi/web/templates/**/*",
+]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 asyncio_mode = "auto"

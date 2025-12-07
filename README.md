@@ -298,10 +298,34 @@ Contributions are welcome! Please:
 
 ### Adding New Characters
 
-If you discover new character byte combinations or SSIDs:
+Characters are stored in `src/hotspotchi/data/characters.yaml` for easy editing.
 
-1. Add entries to `src/hotspotchi/characters.py`
-2. Add tests in `tests/test_characters.py`
+**To add a MAC-based character:**
+
+```yaml
+# Add to the 'characters' section
+- byte1: 0x04        # First byte (0-255, hex or decimal)
+  byte2: 0x00        # Second byte
+  name: NewCharacter
+  season: spring     # Optional: spring, summer, fall, winter
+```
+
+**To add a special SSID character:**
+
+```yaml
+# Add to the 'special_ssids' section
+- ssid: YourSSIDString32CharsLong1234567
+  character_name: Character Name
+  notes: Where this SSID was discovered
+  active: true       # Set to false if no longer working
+```
+
+After editing, restart HotSpotchi to load the new characters.
+
+**To contribute new characters:**
+
+1. Edit `src/hotspotchi/data/characters.yaml`
+2. Run tests (`pytest`)
 3. Submit a pull request with source/verification info
 
 ## Troubleshooting
