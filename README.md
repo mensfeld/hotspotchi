@@ -338,6 +338,41 @@ HotSpotchi requires root privileges for network configuration:
 sudo hotspotchi start
 ```
 
+## Updating
+
+To update HotSpotchi to the latest version:
+
+```bash
+# Navigate to your HotSpotchi directory
+cd /path/to/hotspotchi
+
+# Stop the running services
+sudo systemctl stop hotspotchi hotspotchi-web
+
+# Pull the latest changes
+git pull origin master
+
+# Reinstall the package
+pip install -e ".[web]" --upgrade
+
+# Restart services
+sudo systemctl start hotspotchi hotspotchi-web
+```
+
+If you installed via the install script, you can also re-run it:
+
+```bash
+sudo bash scripts/install.sh
+```
+
+To check for available updates without applying them:
+
+```bash
+cd /path/to/hotspotchi
+git fetch origin
+git log HEAD..origin/master --oneline
+```
+
 ## Uninstallation
 
 ```bash
