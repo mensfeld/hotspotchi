@@ -190,6 +190,17 @@
                         <option value="fall">Fall</option>
                         <option value="winter">Winter</option>
                     </select>
+                    <select class="select select-bordered" id="exclusion-filter" onchange="filterCharacters()">
+                        <option value="">All Characters</option>
+                        <option value="available">Available Only</option>
+                        <option value="excluded">Excluded Only</option>
+                    </select>
+                </div>
+                <div class="flex items-center gap-4 mb-4 text-sm">
+                    <span class="text-base-content/60">
+                        <span id="available-count">0</span> available / <span id="excluded-count">0</span> excluded
+                    </span>
+                    <button class="btn btn-xs btn-outline" onclick="clearExclusions()">Include All</button>
                 </div>
                 <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2"
                      id="character-grid">
@@ -329,21 +340,39 @@
         function renderCharacters(characters) {
             const grid = document.getElementById('character-grid');
             grid.innerHTML = characters.map(char => `
-                <button class="btn btn-outline btn-sm character-btn flex items-center justify-between gap-1 overflow-hidden"
-                        onclick="selectCharacter(${char.index})"
-                        data-name="${char.name.toLowerCase()}"
-                        data-season="${char.season || ''}"
-                        title="${char.name} - ${char.mac_address}">
-                    <span class="truncate">${char.name}</span>
-                    ${char.season ? '<span class="badge badge-xs badge-accent shrink-0">' + char.season.charAt(0).toUpperCase() + '</span>' : ''}
-                </button>
+                <div class="relative group">
+                    <button class="btn btn-sm character-btn flex items-center justify-between gap-1 overflow-hidden w-full ${char.excluded ? 'btn-ghost opacity-50' : 'btn-outline'}"
+                            onclick="selectCharacter(${char.index})"
+                            data-name="${char.name.toLowerCase()}"
+                            data-season="${char.season || ''}"
+                            data-excluded="${char.excluded}"
+                            title="${char.name} - ${char.mac_address}${char.excluded ? ' (excluded from rotation)' : ''}">
+                        <span class="truncate">${char.name}</span>
+                        <span class="flex gap-0.5 shrink-0">
+                            ${char.excluded ? '<span class="badge badge-xs badge-error">X</span>' : ''}
+                            ${char.season ? '<span class="badge badge-xs badge-accent">' + char.season.charAt(0).toUpperCase() + '</span>' : ''}
+                        </span>
+                    </button>
+                    <button class="absolute -top-1 -right-1 btn btn-circle btn-xs opacity-0 group-hover:opacity-100 transition-opacity ${char.excluded ? 'btn-success' : 'btn-error'}"
+                            onclick="event.stopPropagation(); toggleExclusion(${char.index})"
+                            title="${char.excluded ? 'Include in rotation' : 'Exclude from rotation'}">
+                        ${char.excluded ? '+' : '-'}
+                    </button>
+                </div>
             `).join('');
             document.getElementById('character-count').textContent = characters.length;
+
+            // Update counts
+            const availableCount = allCharacters.filter(c => !c.excluded).length;
+            const excludedCount = allCharacters.filter(c => c.excluded).length;
+            document.getElementById('available-count').textContent = availableCount;
+            document.getElementById('excluded-count').textContent = excludedCount;
         }
 
         function filterCharacters() {
             const search = document.getElementById('character-search').value.toLowerCase();
             const season = document.getElementById('season-filter').value;
+            const exclusion = document.getElementById('exclusion-filter').value;
 
             let filtered = allCharacters;
 
@@ -355,7 +384,46 @@
                 filtered = filtered.filter(c => c.season === season);
             }
 
+            if (exclusion === 'available') {
+                filtered = filtered.filter(c => !c.excluded);
+            } else if (exclusion === 'excluded') {
+                filtered = filtered.filter(c => c.excluded);
+            }
+
             renderCharacters(filtered);
+        }
+
+        async function toggleExclusion(index) {
+            try {
+                const response = await fetch(`/api/characters/${index}/toggle-exclusion`, { method: 'POST' });
+                if (response.ok) {
+                    const result = await response.json();
+                    // Update the character in allCharacters
+                    const charIndex = allCharacters.findIndex(c => c.index === index);
+                    if (charIndex >= 0) {
+                        allCharacters[charIndex].excluded = result.excluded;
+                    }
+                    filterCharacters();
+                    showToast(`${result.character}: ${result.action}`, result.excluded ? 'warning' : 'success');
+                }
+            } catch (error) {
+                console.error('Failed to toggle exclusion:', error);
+                showToast('Failed to toggle exclusion', 'error');
+            }
+        }
+
+        async function clearExclusions() {
+            try {
+                const response = await fetch('/api/exclusions', { method: 'DELETE' });
+                if (response.ok) {
+                    // Reload characters to get updated exclusion status
+                    await loadCharacters();
+                    showToast('All characters included', 'success');
+                }
+            } catch (error) {
+                console.error('Failed to clear exclusions:', error);
+                showToast('Failed to clear exclusions', 'error');
+            }
         }
 
         async function loadSSIDs() {

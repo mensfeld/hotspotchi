@@ -16,6 +16,7 @@ from typing import Optional
 
 from hotspotchi.characters import CHARACTERS, Character
 from hotspotchi.config import HotSpotchiConfig, MacMode
+from hotspotchi.exclusions import get_exclusion_manager
 
 
 def get_day_number(date: Optional[datetime] = None) -> int:
@@ -36,6 +37,33 @@ def get_day_number(date: Optional[datetime] = None) -> int:
     if date is None:
         date = datetime.now()
     return date.year * 366 + date.month * 31 + date.day
+
+
+def get_available_characters(
+    characters: tuple[Character, ...] = CHARACTERS,
+    respect_exclusions: bool = True,
+) -> tuple[Character, ...]:
+    """Get characters that are available for selection.
+
+    Filters out excluded characters if respect_exclusions is True.
+
+    Args:
+        characters: Full tuple of characters
+        respect_exclusions: If True, filter out excluded characters
+
+    Returns:
+        Tuple of available characters
+    """
+    if not respect_exclusions:
+        return characters
+
+    exclusion_manager = get_exclusion_manager()
+    available = []
+    for i, char in enumerate(characters):
+        if not exclusion_manager.is_excluded(i):
+            available.append(char)
+
+    return tuple(available) if available else characters  # Fallback to all if all excluded
 
 
 def get_cycle_index(cycle_file: Path, total_characters: int) -> int:
@@ -75,6 +103,7 @@ def select_character(
     config: HotSpotchiConfig,
     characters: tuple[Character, ...] = CHARACTERS,
     current_date: Optional[datetime] = None,
+    respect_exclusions: bool = True,
 ) -> Optional[Character]:
     """Select a character based on the configured MAC mode.
 
@@ -82,6 +111,8 @@ def select_character(
         config: Configuration with mac_mode and related settings
         characters: Tuple of available characters (defaults to all)
         current_date: Override current date (for testing)
+        respect_exclusions: If True, excluded characters won't be selected
+            (except in fixed mode where the user explicitly chooses)
 
     Returns:
         Selected Character, or None if mode is DISABLED
@@ -92,23 +123,29 @@ def select_character(
     if config.mac_mode == MacMode.DISABLED:
         return None
 
-    if config.mac_mode == MacMode.DAILY_RANDOM:
-        day = get_day_number(current_date)
-        random.seed(day)
-        return random.choice(characters)
-
-    if config.mac_mode == MacMode.RANDOM:
-        return random.choice(characters)
-
-    if config.mac_mode == MacMode.CYCLE:
-        index = get_cycle_index(config.cycle_file, len(characters))
-        return characters[index]
-
+    # Fixed mode ignores exclusions - user explicitly chose this character
     if config.mac_mode == MacMode.FIXED:
         # Clamp index to valid range
         index = min(config.fixed_character_index, len(characters) - 1)
         index = max(0, index)
         return characters[index]
+
+    # For rotation modes, filter out excluded characters
+    available = get_available_characters(characters, respect_exclusions)
+    if not available:
+        return None
+
+    if config.mac_mode == MacMode.DAILY_RANDOM:
+        day = get_day_number(current_date)
+        random.seed(day)
+        return random.choice(available)
+
+    if config.mac_mode == MacMode.RANDOM:
+        return random.choice(available)
+
+    if config.mac_mode == MacMode.CYCLE:
+        index = get_cycle_index(config.cycle_file, len(available))
+        return available[index]
 
     return None
 

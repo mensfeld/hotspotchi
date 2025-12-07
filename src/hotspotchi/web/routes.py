@@ -11,6 +11,7 @@ from pydantic import BaseModel
 
 from hotspotchi.characters import CHARACTERS, SPECIAL_SSIDS
 from hotspotchi.config import HotSpotchiConfig, MacMode, SsidMode
+from hotspotchi.exclusions import get_exclusion_manager
 from hotspotchi.hotspot import HotspotManager
 from hotspotchi.mac import create_mac_address, format_mac
 from hotspotchi.selection import (
@@ -51,6 +52,8 @@ class StatusResponse(BaseModel):
     next_change_at: Optional[datetime]
     seconds_until_change: Optional[int]
     total_characters: int
+    available_characters: int
+    excluded_characters: int
     total_special_ssids: int
     hotspot_running: bool
     is_root: bool
@@ -67,6 +70,7 @@ class CharacterResponse(BaseModel):
     byte2: int
     mac_address: str
     season: Optional[str]
+    excluded: bool
 
 
 class SpecialSSIDResponse(BaseModel):
@@ -102,6 +106,7 @@ async def get_status() -> StatusResponse:
     """Get current hotspot status."""
     config = _current_config
     manager = _get_hotspot_manager()
+    exclusion_manager = get_exclusion_manager()
 
     ssid, special_char = resolve_ssid(config)
     character = select_character(config)
@@ -116,6 +121,10 @@ async def get_status() -> StatusResponse:
         seconds_remaining = get_seconds_until_midnight()
         next_change = datetime.now() + timedelta(seconds=seconds_remaining)
 
+    # Count available vs excluded
+    excluded_count = exclusion_manager.get_excluded_count()
+    available_count = len(CHARACTERS) - excluded_count
+
     return StatusResponse(
         ssid=ssid,
         mac_address=mac_address,
@@ -125,6 +134,8 @@ async def get_status() -> StatusResponse:
         next_change_at=next_change,
         seconds_until_change=seconds_remaining,
         total_characters=len(CHARACTERS),
+        available_characters=available_count,
+        excluded_characters=excluded_count,
         total_special_ssids=len(SPECIAL_SSIDS),
         hotspot_running=manager.is_running(),
         is_root=_is_root(),
@@ -137,10 +148,21 @@ async def get_status() -> StatusResponse:
 async def list_characters(
     season: Optional[str] = None,
     search: Optional[str] = None,
+    excluded_only: bool = False,
+    available_only: bool = False,
 ) -> list[CharacterResponse]:
     """List all MAC-based characters."""
+    exclusion_manager = get_exclusion_manager()
     result = []
     for i, char in enumerate(CHARACTERS):
+        is_excluded = exclusion_manager.is_excluded(i)
+
+        # Filter by exclusion status
+        if excluded_only and not is_excluded:
+            continue
+        if available_only and is_excluded:
+            continue
+
         # Filter by season
         if season and char.season != season.lower():
             continue
@@ -157,6 +179,7 @@ async def list_characters(
                 byte2=char.byte2,
                 mac_address=format_mac(create_mac_address(char)),
                 season=char.season,
+                excluded=is_excluded,
             )
         )
 
@@ -169,6 +192,7 @@ async def get_character(index: int) -> CharacterResponse:
     if not 0 <= index < len(CHARACTERS):
         raise HTTPException(status_code=404, detail="Character not found")
 
+    exclusion_manager = get_exclusion_manager()
     char = CHARACTERS[index]
     return CharacterResponse(
         index=index,
@@ -177,6 +201,7 @@ async def get_character(index: int) -> CharacterResponse:
         byte2=char.byte2,
         mac_address=format_mac(create_mac_address(char)),
         season=char.season,
+        excluded=exclusion_manager.is_excluded(index),
     )
 
 
@@ -435,4 +460,90 @@ async def get_hotspot_status() -> dict:
         "character": state.character_name,
         "ip_address": state.ip_address,
         "is_root": _is_root(),
+    }
+
+
+# ============================================
+# Character Exclusion Endpoints
+# ============================================
+
+
+@router.post("/characters/{index}/exclude")
+async def exclude_character(index: int) -> dict:
+    """Exclude a character from rotation modes."""
+    if not 0 <= index < len(CHARACTERS):
+        raise HTTPException(status_code=404, detail="Character not found")
+
+    exclusion_manager = get_exclusion_manager()
+    exclusion_manager.exclude(index)
+    char = CHARACTERS[index]
+
+    return {
+        "status": "ok",
+        "action": "excluded",
+        "character": char.name,
+        "index": index,
+    }
+
+
+@router.post("/characters/{index}/include")
+async def include_character(index: int) -> dict:
+    """Include a previously excluded character in rotation modes."""
+    if not 0 <= index < len(CHARACTERS):
+        raise HTTPException(status_code=404, detail="Character not found")
+
+    exclusion_manager = get_exclusion_manager()
+    exclusion_manager.include(index)
+    char = CHARACTERS[index]
+
+    return {
+        "status": "ok",
+        "action": "included",
+        "character": char.name,
+        "index": index,
+    }
+
+
+@router.post("/characters/{index}/toggle-exclusion")
+async def toggle_character_exclusion(index: int) -> dict:
+    """Toggle exclusion status for a character."""
+    if not 0 <= index < len(CHARACTERS):
+        raise HTTPException(status_code=404, detail="Character not found")
+
+    exclusion_manager = get_exclusion_manager()
+    is_now_excluded = exclusion_manager.toggle(index)
+    char = CHARACTERS[index]
+
+    return {
+        "status": "ok",
+        "action": "excluded" if is_now_excluded else "included",
+        "character": char.name,
+        "index": index,
+        "excluded": is_now_excluded,
+    }
+
+
+@router.get("/exclusions")
+async def get_exclusions() -> dict:
+    """Get all excluded character indices."""
+    exclusion_manager = get_exclusion_manager()
+    excluded = exclusion_manager.get_excluded()
+
+    return {
+        "excluded_indices": sorted(excluded),
+        "excluded_count": len(excluded),
+        "total_characters": len(CHARACTERS),
+        "available_count": len(CHARACTERS) - len(excluded),
+    }
+
+
+@router.delete("/exclusions")
+async def clear_exclusions() -> dict:
+    """Clear all exclusions (include all characters)."""
+    exclusion_manager = get_exclusion_manager()
+    exclusion_manager.clear()
+
+    return {
+        "status": "ok",
+        "message": "All characters are now included in rotation",
     }

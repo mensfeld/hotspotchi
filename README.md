@@ -330,6 +330,40 @@ After editing, restart HotSpotchi to load the new characters.
 
 ## Troubleshooting
 
+### Raspberry Pi becomes unreachable / hangs after starting hotspot
+
+**This is expected behavior.** When HotSpotchi starts the WiFi hotspot, it takes over the `wlan0` interface. If your Pi was connected to your home WiFi via `wlan0`, it will disconnect from the router and you'll lose SSH access.
+
+**Solutions:**
+
+1. **Use Ethernet for management** (recommended):
+   - Connect your Pi via Ethernet cable before starting the hotspot
+   - The web dashboard and SSH will remain accessible via Ethernet
+   - The WiFi interface will be used exclusively for the Tamagotchi hotspot
+
+2. **Use a second WiFi adapter**:
+   - Add a USB WiFi adapter (wlan1) for your home network
+   - Configure HotSpotchi to use wlan0 for the hotspot
+   - Keep wlan1 connected to your router for management
+
+3. **Physical access only**:
+   - Connect a keyboard and monitor directly to the Pi
+   - Manage HotSpotchi locally without network access
+
+**To recover a "stuck" Pi:**
+
+```bash
+# If Pi appears hung, it's likely just unreachable via WiFi
+# Connect via Ethernet or direct console access, then:
+sudo systemctl stop hotspotchi
+sudo systemctl disable hotspotchi
+
+# Restore normal WiFi:
+sudo nmcli device wifi connect "YourNetworkSSID" password "YourPassword"
+# Or reboot the Pi
+sudo reboot
+```
+
 ### WiFi not appearing
 
 ```bash
