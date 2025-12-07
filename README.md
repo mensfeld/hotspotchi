@@ -21,6 +21,8 @@ The problem? You'd need to physically visit different locations with different W
 
 Perfect for completionists, rural players without access to many WiFi networks, or anyone who just wants to meet their favorite Tamagotchi characters without leaving the house.
 
+![HotSpotchi Web Dashboard](misc/ui.png)
+
 ## Features
 
 - **69 MAC-based characters** - Meet different Tamagotchi characters by changing the WiFi MAC address (includes seasonal characters)
