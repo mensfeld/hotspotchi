@@ -60,6 +60,21 @@ pip install hotspotchi
 pip install "hotspotchi[web]"
 ```
 
+## Security Considerations
+
+**HotSpotchi requires root/sudo privileges** to manage network interfaces, MAC addresses, and system services. Before running, please be aware:
+
+- **Review the code** - This software modifies network settings. Always review code from any source before running with elevated privileges.
+- **Dedicated device recommended** - Use a dedicated Raspberry Pi for HotSpotchi rather than a device with sensitive data.
+- **Network isolation** - The hotspot created is a separate network. Consider your network topology and who can connect.
+- **No warranty** - This software is provided "as is" without warranty. Use at your own risk.
+- **Web dashboard access** - If running the web interface, it binds to `0.0.0.0` by default (accessible from your network). Restrict access if needed or bind to `127.0.0.1` for local-only access.
+
+If you're uncomfortable running third-party code as root, you can:
+1. Review all source code in `src/hotspotchi/`
+2. Run in a virtual machine or container first
+3. Use a freshly imaged SD card dedicated to this purpose
+
 ## Usage
 
 ### Command Line
