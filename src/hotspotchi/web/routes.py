@@ -78,7 +78,7 @@ def _save_current_config() -> None:
     config_path = Path("/etc/hotspotchi/config.yaml")
 
     # Read existing config to preserve settings we don't manage
-    existing_config = {}
+    existing_config: dict[str, object] = {}
     if config_path.exists():
         with open(config_path) as f:
             existing_config = yaml.safe_load(f) or {}

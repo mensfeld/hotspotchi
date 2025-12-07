@@ -1,12 +1,10 @@
 """Tests for web API routes."""
 
-from unittest.mock import patch
-
 import pytest
 from fastapi.testclient import TestClient
 
 from hotspotchi.characters import CHARACTERS, SPECIAL_SSIDS
-from hotspotchi.exclusions import get_exclusion_manager, reset_exclusion_manager
+from hotspotchi.exclusions import get_exclusion_manager
 from hotspotchi.web.app import app
 
 
