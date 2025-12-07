@@ -457,8 +457,18 @@ dhcp-range={self.config.dhcp_range_start},{self.config.dhcp_range_end},{self.con
             self._run_command("systemctl restart NetworkManager 2>/dev/null")
 
     def is_running(self) -> bool:
-        """Check if hotspot is currently running."""
-        return bool(self._hostapd_process and self._hostapd_process.poll() is None)
+        """Check if hotspot is currently running.
+
+        Checks both our own process and any system-wide hostapd process.
+        This allows the web dashboard to detect hotspots started by systemd.
+        """
+        # First check our own process
+        if self._hostapd_process and self._hostapd_process.poll() is None:
+            return True
+
+        # Also check for any hostapd process running system-wide
+        result = self._run_command("pgrep -x hostapd")
+        return result.returncode == 0
 
     def restart(self, new_config: Optional[HotSpotchiConfig] = None) -> HotspotState:
         """Restart the hotspot with optional new configuration.
