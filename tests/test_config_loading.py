@@ -237,21 +237,32 @@ class TestWebAppConfigLoading:
         with open(config_path, "w") as f:
             yaml.safe_dump({"web_host": "127.0.0.1", "web_port": 9000}, f)
 
-        from hotspotchi.web.app import _load_server_config
+        # Import the actual module using sys.modules
+        import sys
 
-        with patch("hotspotchi.web.app.DEFAULT_CONFIG_PATH", config_path):
-            config = _load_server_config()
+        app_module = sys.modules["hotspotchi.web.app"]
+
+        # Patch DEFAULT_CONFIG_PATH to point to our test config
+        original_path = app_module.DEFAULT_CONFIG_PATH
+        try:
+            app_module.DEFAULT_CONFIG_PATH = config_path
+            config = app_module._load_server_config()
             assert config.web_host == "127.0.0.1"
             assert config.web_port == 9000
+        finally:
+            app_module.DEFAULT_CONFIG_PATH = original_path
 
     def test_load_server_config_defaults(self, temp_dir):
         """Web app should use defaults when no config file."""
-        from hotspotchi.web.app import _load_server_config
+        import sys
 
-        with patch(
-            "hotspotchi.web.app.DEFAULT_CONFIG_PATH",
-            temp_dir / "nonexistent.yaml",
-        ):
-            config = _load_server_config()
+        app_module = sys.modules["hotspotchi.web.app"]
+
+        original_path = app_module.DEFAULT_CONFIG_PATH
+        try:
+            app_module.DEFAULT_CONFIG_PATH = temp_dir / "nonexistent.yaml"
+            config = app_module._load_server_config()
             assert config.web_host == "0.0.0.0"
             assert config.web_port == 8080
+        finally:
+            app_module.DEFAULT_CONFIG_PATH = original_path
