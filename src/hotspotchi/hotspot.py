@@ -453,9 +453,11 @@ dhcp-range={self.config.dhcp_range_start},{self.config.dhcp_range_end},{self.con
                 self._dnsmasq_process.kill()
             self._dnsmasq_process = None
 
-        # Also kill any system-wide hostapd/dnsmasq (for cross-process restart)
+        # Also kill any system-wide hostapd (for cross-process restart)
+        # Only kill hostapd - dnsmasq might be used by NetworkManager for DNS
         self._run_command("pkill -x hostapd")
-        self._run_command("pkill -x dnsmasq")
+        # Kill only our dnsmasq instances (those with our config file)
+        self._run_command("pkill -f 'dnsmasq.*hotspotchi'")
 
         # Restore original MAC (only if we changed it)
         if self._original_mac:
