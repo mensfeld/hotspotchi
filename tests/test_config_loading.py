@@ -116,9 +116,7 @@ class TestConfigWithOverrides:
         )
 
         # Override only mac_mode
-        new_config = HotSpotchiConfig(
-            **{**original.model_dump(), "mac_mode": MacMode.FIXED}
-        )
+        new_config = HotSpotchiConfig(**{**original.model_dump(), "mac_mode": MacMode.FIXED})
 
         # Changed field
         assert new_config.mac_mode == MacMode.FIXED
@@ -212,9 +210,7 @@ class TestCLIConfigLoading:
         """_config_with_overrides should preserve base config values."""
         config_path = temp_dir / "config.yaml"
         with open(config_path, "w") as f:
-            yaml.safe_dump(
-                {"concurrent_mode": True, "wifi_interface": "wlan1"}, f
-            )
+            yaml.safe_dump({"concurrent_mode": True, "wifi_interface": "wlan1"}, f)
 
         from hotspotchi.cli import _config_with_overrides
 
