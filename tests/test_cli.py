@@ -210,9 +210,7 @@ class TestStartCommand:
         assert config.concurrent_mode is False
 
     @patch("hotspotchi.cli.run_hotspot")
-    def test_start_with_config_file(
-        self, mock_run: MagicMock, runner: CliRunner, temp_dir: Path
-    ):
+    def test_start_with_config_file(self, mock_run: MagicMock, runner: CliRunner, temp_dir: Path):
         """start --config should load config file."""
         config_file = temp_dir / "config.yaml"
         config_file.write_text("mac_mode: random\n")
