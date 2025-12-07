@@ -403,7 +403,9 @@ dhcp-range={self.config.dhcp_range_start},{self.config.dhcp_range_end},{self.con
         if self._hostapd_process.poll() is not None:
             stdout, stderr = self._hostapd_process.communicate()
             self.stop()
-            raise RuntimeError(f"hostapd failed to start: {stderr.decode()}")
+            # hostapd outputs errors to stdout, not stderr
+            error_msg = stdout.decode() or stderr.decode()
+            raise RuntimeError(f"hostapd failed to start: {error_msg}")
 
         return HotspotState(
             running=True,
