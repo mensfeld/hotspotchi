@@ -405,10 +405,11 @@ async def set_character(index: int, apply: bool = False) -> dict:
     if not 0 <= index < len(CHARACTERS):
         raise HTTPException(status_code=400, detail="Invalid character index")
 
-    # Only update the character index, don't change the mode
+    # Update character index and set mode to fixed
     _current_config = HotSpotchiConfig(
         **{
             **_current_config.model_dump(),
+            "mac_mode": MacMode.FIXED,
             "fixed_character_index": index,
         }
     )
