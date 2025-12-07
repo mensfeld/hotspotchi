@@ -1,6 +1,6 @@
 # HotSpotchi Changelog
 
-## 2.2.0 (Unreleased)
+## 2.2.0 (2025-12-07)
 
 - [Feature] Add special SSID exclusion support to web UI with search, filtering, and toggle controls
 - [Feature] Add API endpoints for SSID exclusion management (`/api/ssids/{index}/exclude`, `/api/ssids/{index}/include`, `/api/ssids/{index}/toggle-exclusion`)
