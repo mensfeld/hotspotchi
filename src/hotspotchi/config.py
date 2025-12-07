@@ -134,8 +134,6 @@ class HotSpotchiConfig(BaseModel):
     )
 
     model_config = {
-        "env_prefix": "HOTSPOTCHI_",
-        "env_file": ".env",
         "extra": "ignore",
     }
 

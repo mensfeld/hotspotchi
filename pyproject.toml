@@ -30,6 +30,7 @@ classifiers = [
 dependencies = [
     "pydantic>=2.0",
     "click>=8.0",
+    "pyyaml>=6.0",
 ]
 
 [project.optional-dependencies]
@@ -45,6 +46,7 @@ dev = [
     "ruff>=0.1",
     "mypy>=1.0",
     "httpx>=0.24",
+    "types-pyyaml>=6.0",
 ]
 all = [
     "hotspotchi[web,dev]",

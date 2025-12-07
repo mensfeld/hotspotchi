@@ -1,7 +1,5 @@
 """Tests for SSID resolution logic."""
 
-import pytest
-
 from hotspotchi.characters import SPECIAL_SSIDS
 from hotspotchi.config import HotSpotchiConfig, SsidMode
 from hotspotchi.ssid import (

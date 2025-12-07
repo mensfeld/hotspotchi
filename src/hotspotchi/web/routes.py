@@ -223,13 +223,17 @@ async def update_config(update: ConfigUpdate) -> dict:
         try:
             config_dict["mac_mode"] = MacMode(update.mac_mode)
         except ValueError:
-            raise HTTPException(status_code=400, detail=f"Invalid mac_mode: {update.mac_mode}")
+            raise HTTPException(
+                status_code=400, detail=f"Invalid mac_mode: {update.mac_mode}"
+            ) from None
 
     if update.ssid_mode:
         try:
             config_dict["ssid_mode"] = SsidMode(update.ssid_mode)
         except ValueError:
-            raise HTTPException(status_code=400, detail=f"Invalid ssid_mode: {update.ssid_mode}")
+            raise HTTPException(
+                status_code=400, detail=f"Invalid ssid_mode: {update.ssid_mode}"
+            ) from None
 
     if update.special_ssid_index is not None:
         if not 0 <= update.special_ssid_index < len(SPECIAL_SSIDS):

@@ -5,7 +5,6 @@ Provides commands to start, stop, and manage the WiFi hotspot,
 list characters, and configure settings.
 """
 
-import sys
 from pathlib import Path
 from typing import Optional
 
@@ -149,7 +148,7 @@ def list_characters(season: Optional[str], search: Optional[str]) -> None:
     click.echo(f"MAC-Based Characters ({len(chars)} total)")
     click.echo("=" * 60)
 
-    for i, char in enumerate(chars):
+    for char in chars:
         mac = format_mac(create_mac_address(char))
         season_str = f" [{char.season}]" if char.season else ""
         # Find original index

@@ -2,9 +2,6 @@
 
 from datetime import datetime
 from pathlib import Path
-from unittest.mock import patch
-
-import pytest
 
 from hotspotchi.characters import CHARACTERS
 from hotspotchi.config import HotSpotchiConfig, MacMode
@@ -122,7 +119,8 @@ class TestSelectCharacter:
         char2 = select_character(daily_random_config, current_date=date2)
         # We can't guarantee different, but for these specific dates they are
         # If this fails, consider using more distant dates
-        assert char1 != char2 or True  # Allow same by chance
+        # Note: Could theoretically be same by chance, test passes either way
+        assert char1 is not None and char2 is not None
 
     def test_random_mode_returns_character(self):
         """Random mode should return a valid character."""

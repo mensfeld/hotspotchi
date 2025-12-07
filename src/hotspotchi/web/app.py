@@ -10,7 +10,6 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 from hotspotchi import __version__
-from hotspotchi.config import HotSpotchiConfig
 from hotspotchi.web.routes import router
 
 # Paths
@@ -68,7 +67,6 @@ def run_server(
     """
     import uvicorn
 
-    config = HotSpotchiConfig()
     print(f"Starting HotSpotchi Web Dashboard on http://{host}:{port}")
     uvicorn.run(
         "hotspotchi.web.app:app",

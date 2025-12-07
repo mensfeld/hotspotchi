@@ -8,16 +8,15 @@ Create WiFi access points with custom MAC addresses and SSIDs for meeting charac
 
 ## Features
 
-- **80+ MAC-based characters** - Meet different Tamagotchi characters by changing the WiFi MAC address
+- **69 MAC-based characters** - Meet different Tamagotchi characters by changing the WiFi MAC address (includes seasonal characters)
 - **21 special SSID characters** - Access event-exclusive characters with special network names
 - **Multiple rotation modes**:
-  - `daily_random` - Different character each day, same all day
+  - `daily_random` - Different character each day (from all 69), same all day (default)
   - `random` - New random character each boot
   - `cycle` - Progress through all characters in order
   - `fixed` - Always show a specific character
   - `disabled` - Use device default MAC
 - **Web dashboard** - Monitor and control via browser with DaisyUI interface
-- **Seasonal characters** - Spring, Summer, Fall, Winter exclusives
 - **Raspberry Pi optimized** - Works with hostapd + dnsmasq
 
 ## Quick Start

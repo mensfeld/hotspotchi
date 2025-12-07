@@ -66,14 +66,12 @@ class HotspotManager:
     def _run_command(
         self,
         cmd: str,
-        check: bool = True,
         capture: bool = True,
     ) -> subprocess.CompletedProcess:
         """Run a shell command.
 
         Args:
             cmd: Command string to execute
-            check: If True, don't raise on non-zero exit
             capture: If True, capture stdout/stderr
 
         Returns:
@@ -146,15 +144,10 @@ wpa_pairwise=TKIP
 rsn_pairwise=CCMP
 """
 
-        config_file = tempfile.NamedTemporaryFile(
-            mode="w",
-            suffix=".conf",
-            prefix="hotspotchi_hostapd_",
-            delete=False,
-        )
-        config_file.write(config)
-        config_file.close()
-        return Path(config_file.name)
+        fd, path = tempfile.mkstemp(suffix=".conf", prefix="hotspotchi_hostapd_")
+        with os.fdopen(fd, "w") as config_file:
+            config_file.write(config)
+        return Path(path)
 
     def _create_dnsmasq_config(self) -> Path:
         """Create dnsmasq configuration file.
@@ -166,26 +159,21 @@ rsn_pairwise=CCMP
 dhcp-range={self.config.dhcp_range_start},{self.config.dhcp_range_end},{self.config.ap_netmask},24h
 """
 
-        config_file = tempfile.NamedTemporaryFile(
-            mode="w",
-            suffix=".conf",
-            prefix="hotspotchi_dnsmasq_",
-            delete=False,
-        )
-        config_file.write(config)
-        config_file.close()
-        return Path(config_file.name)
+        fd, path = tempfile.mkstemp(suffix=".conf", prefix="hotspotchi_dnsmasq_")
+        with os.fdopen(fd, "w") as config_file:
+            config_file.write(config)
+        return Path(path)
 
     def _stop_conflicting_services(self) -> None:
         """Stop any services that might conflict."""
-        self._run_command("systemctl stop hostapd 2>/dev/null", check=False)
-        self._run_command("systemctl stop dnsmasq 2>/dev/null", check=False)
-        self._run_command("killall hostapd 2>/dev/null", check=False)
-        self._run_command("killall dnsmasq 2>/dev/null", check=False)
+        self._run_command("systemctl stop hostapd 2>/dev/null")
+        self._run_command("systemctl stop dnsmasq 2>/dev/null")
+        self._run_command("killall hostapd 2>/dev/null")
+        self._run_command("killall dnsmasq 2>/dev/null")
 
     def _unblock_wifi(self) -> None:
         """Unblock WiFi if blocked by rfkill."""
-        self._run_command("rfkill unblock wifi", check=False)
+        self._run_command("rfkill unblock wifi")
 
     def _configure_interface(self) -> None:
         """Configure IP address on interface."""
@@ -215,10 +203,7 @@ dhcp-range={self.config.dhcp_range_start},{self.config.dhcp_range_end},{self.con
         self._unblock_wifi()
 
         # Disable NetworkManager control
-        self._run_command(
-            f"nmcli device set {self.config.wifi_interface} managed no 2>/dev/null",
-            check=False,
-        )
+        self._run_command(f"nmcli device set {self.config.wifi_interface} managed no 2>/dev/null")
 
         # Get SSID and character info
         ssid, special_char = resolve_ssid(self.config)
@@ -302,12 +287,11 @@ dhcp-range={self.config.dhcp_range_start},{self.config.dhcp_range_end},{self.con
 
         # Restore original MAC
         if self._original_mac:
-            self._run_command(f"ip link set {self.config.wifi_interface} down", check=False)
+            self._run_command(f"ip link set {self.config.wifi_interface} down")
             self._run_command(
-                f"ip link set {self.config.wifi_interface} address {self._original_mac}",
-                check=False,
+                f"ip link set {self.config.wifi_interface} address {self._original_mac}"
             )
-            self._run_command(f"ip link set {self.config.wifi_interface} up", check=False)
+            self._run_command(f"ip link set {self.config.wifi_interface} up")
             self._original_mac = None
 
         # Clean up config files
@@ -319,13 +303,11 @@ dhcp-range={self.config.dhcp_range_start},{self.config.dhcp_range_end},{self.con
         self._dnsmasq_config = None
 
         # Restart NetworkManager
-        self._run_command("systemctl restart NetworkManager 2>/dev/null", check=False)
+        self._run_command("systemctl restart NetworkManager 2>/dev/null")
 
     def is_running(self) -> bool:
         """Check if hotspot is currently running."""
-        if self._hostapd_process and self._hostapd_process.poll() is None:
-            return True
-        return False
+        return bool(self._hostapd_process and self._hostapd_process.poll() is None)
 
     def get_state(self) -> HotspotState:
         """Get current hotspot state."""
@@ -364,7 +346,7 @@ def run_hotspot(config: HotSpotchiConfig) -> None:
     """
     manager = HotspotManager(config)
 
-    def cleanup(signum: int, frame) -> None:
+    def cleanup(_signum: int, _frame) -> None:
         print("\nShutting down...")
         manager.stop()
         print("Cleanup complete.")
@@ -375,7 +357,7 @@ def run_hotspot(config: HotSpotchiConfig) -> None:
 
     try:
         state = manager.start()
-        print(f"HotSpotchi is running!")
+        print("HotSpotchi is running!")
         print(f"  SSID: {state.ssid}")
         print(f"  MAC: {state.mac_address or 'default'}")
         print(f"  Character: {state.character_name or 'none'}")

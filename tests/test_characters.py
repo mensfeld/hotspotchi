@@ -50,7 +50,7 @@ class TestCharacterData:
     def test_character_immutability(self):
         """Characters should be immutable (frozen dataclass)."""
         char = CHARACTERS[0]
-        with pytest.raises(Exception):  # FrozenInstanceError
+        with pytest.raises(AttributeError):
             char.name = "Modified"
 
 
