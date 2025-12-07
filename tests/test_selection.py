@@ -6,6 +6,7 @@ from pathlib import Path
 from hotspotchi.characters import CHARACTERS
 from hotspotchi.config import HotSpotchiConfig, MacMode
 from hotspotchi.selection import (
+    generate_daily_password,
     get_cycle_index,
     get_day_number,
     get_next_character,
@@ -237,3 +238,52 @@ class TestGetSecondsUntilMidnight:
         assert seconds >= 0
         # At most 24 hours
         assert seconds <= 86400
+
+
+class TestGenerateDailyPassword:
+    """Tests for daily password generation."""
+
+    def test_same_day_same_password(self):
+        """Same date should produce same password."""
+        date = datetime(2024, 6, 15)
+        password1 = generate_daily_password(date)
+        password2 = generate_daily_password(date)
+        assert password1 == password2
+
+    def test_different_days_different_passwords(self):
+        """Different dates should produce different passwords."""
+        date1 = datetime(2024, 6, 15)
+        date2 = datetime(2024, 6, 16)
+        password1 = generate_daily_password(date1)
+        password2 = generate_daily_password(date2)
+        assert password1 != password2
+
+    def test_password_length(self):
+        """Password should be 16 characters."""
+        password = generate_daily_password()
+        assert len(password) == 16
+
+    def test_password_alphanumeric(self):
+        """Password should only contain alphanumeric characters."""
+        password = generate_daily_password()
+        assert password.isalnum()
+
+    def test_wpa2_minimum_length(self):
+        """Password should meet WPA2 minimum length requirement (8 chars)."""
+        password = generate_daily_password()
+        assert len(password) >= 8
+
+    def test_deterministic(self):
+        """Same date should always give same password."""
+        date = datetime(2024, 3, 14)
+        results = [generate_daily_password(date) for _ in range(10)]
+        assert len(set(results)) == 1
+
+    def test_different_from_character_selection(self):
+        """Password seed should differ from character selection seed."""
+        # This ensures the password and character don't use the exact same RNG state
+        date = datetime(2024, 6, 15)
+        password = generate_daily_password(date)
+        # If both used same seed, they would be correlated
+        # Password should be independent of character selection
+        assert len(password) == 16

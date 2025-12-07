@@ -18,7 +18,7 @@ from typing import Optional
 
 from hotspotchi.config import HotSpotchiConfig
 from hotspotchi.mac import create_mac_address, format_mac
-from hotspotchi.selection import select_character
+from hotspotchi.selection import generate_daily_password, select_character
 from hotspotchi.ssid import resolve_ssid
 
 
@@ -116,6 +116,21 @@ class HotspotManager:
         time.sleep(0.5)
         return True
 
+    def _get_effective_password(self) -> Optional[str]:
+        """Get the password to use for the WiFi network.
+
+        Returns:
+            Password string, or None for open network
+        """
+        if self.config.wifi_password is None:
+            # Generate daily random password
+            return generate_daily_password()
+        if self.config.wifi_password == "":
+            # Empty string = open network
+            return None
+        # Use configured password
+        return self.config.wifi_password
+
     def _create_hostapd_config(self, ssid: str) -> Path:
         """Create hostapd configuration file.
 
@@ -136,9 +151,10 @@ auth_algs=1
 ignore_broadcast_ssid=0
 """
 
-        if self.config.wifi_password:
+        password = self._get_effective_password()
+        if password:
             config += f"""wpa=2
-wpa_passphrase={self.config.wifi_password}
+wpa_passphrase={password}
 wpa_key_mgmt=WPA-PSK
 wpa_pairwise=TKIP
 rsn_pairwise=CCMP

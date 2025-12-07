@@ -97,11 +97,14 @@ class HotSpotchiConfig(BaseModel):
         description="File to persist cycle position",
     )
 
-    # Security - default password prevents unwanted connections
+    # Security - password prevents unwanted connections
     # Tamagotchi only needs to detect the SSID, not connect
+    # None = generate random daily password (default, recommended)
+    # Empty string = open network (not recommended)
+    # Any string = use that fixed password
     wifi_password: Optional[str] = Field(
-        default="HotSpotchi2024!",
-        description="WiFi password (WPA2). Set to None for open network (not recommended)",
+        default=None,
+        description="WiFi password (WPA2). None=daily random, ''=open, or set fixed password",
     )
 
     # Network configuration
@@ -142,7 +145,10 @@ class HotSpotchiConfig(BaseModel):
     @classmethod
     def validate_password(cls, v: Optional[str]) -> Optional[str]:
         """Validate WiFi password meets WPA2 requirements."""
-        if v is not None and len(v) < 8:
+        # None = daily random password (valid)
+        # Empty string = open network (valid but not recommended)
+        # Non-empty string = must be at least 8 chars for WPA2
+        if v is not None and v != "" and len(v) < 8:
             raise ValueError("WiFi password must be at least 8 characters for WPA2")
         return v
 

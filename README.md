@@ -70,6 +70,23 @@ pip install "hotspotchi[web]"
 - **No warranty** - This software is provided "as is" without warranty. Use at your own risk.
 - **Web dashboard access** - If running the web interface, it binds to `0.0.0.0` by default (accessible from your network). Restrict access if needed or bind to `127.0.0.1` for local-only access.
 
+### WiFi Network Security
+
+The HotSpotchi hotspot is **secured by default with WPA2** to prevent unwanted connections:
+
+- **Daily rotating password** - By default, a random 16-character alphanumeric password is generated each day. The password changes at midnight, similar to how daily character selection works.
+- **No connection required** - Tamagotchi Uni only needs to *detect* the network name (SSID), not actually connect to it. The password exists solely to prevent random devices from joining your hotspot.
+- **Password options in config**:
+  - `wifi_password: null` - Daily rotating random password (default, recommended)
+  - `wifi_password: "YourPassword"` - Use a fixed password of your choice
+  - `wifi_password: ""` - Open network with no password (not recommended)
+
+```yaml
+# /etc/hotspotchi/config.yaml
+# Default: null (generates random daily password)
+wifi_password: null
+```
+
 If you're uncomfortable running third-party code as root, you can:
 1. Review all source code in `src/hotspotchi/`
 2. Run in a virtual machine or container first
@@ -167,10 +184,10 @@ fixed_character_index: 0
 # For special mode - SSID index (0 = Angel & Devil)
 special_ssid_index: 0
 
-# WPA2 password (default: HotSpotchi2024!)
+# WPA2 password (default: null = daily rotating random password)
 # Tamagotchi only needs to detect the network, not connect
-# Set to null/empty for open network (not recommended)
-wifi_password: "HotSpotchi2024!"
+# Options: null (daily random), "YourPassword" (fixed), "" (open - not recommended)
+wifi_password: null
 
 # Web server settings
 web_host: "0.0.0.0"

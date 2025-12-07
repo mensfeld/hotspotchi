@@ -187,3 +187,30 @@ def get_seconds_until_midnight() -> int:
     next_midnight = midnight + timedelta(days=1)
     delta = next_midnight - now
     return int(delta.total_seconds())
+
+
+def generate_daily_password(current_date: Optional[datetime] = None) -> str:
+    """Generate a random WPA2 password that changes daily.
+
+    Uses the same deterministic daily seed as character selection,
+    ensuring the password is consistent throughout the day but
+    changes at midnight. The password is 16 characters long,
+    using alphanumeric characters for WPA2 compatibility.
+
+    Args:
+        current_date: Override current date (for testing)
+
+    Returns:
+        16-character random password
+    """
+    import string
+
+    day = get_day_number(current_date)
+    # Use a different seed offset to avoid correlation with character selection
+    random.seed(day + 0x7A6DA0)  # "TAMA" signature offset
+
+    # WPA2-safe characters (alphanumeric)
+    chars = string.ascii_letters + string.digits
+    password = "".join(random.choice(chars) for _ in range(16))
+
+    return password
