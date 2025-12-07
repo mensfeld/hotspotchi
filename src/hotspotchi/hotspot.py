@@ -309,6 +309,36 @@ dhcp-range={self.config.dhcp_range_start},{self.config.dhcp_range_end},{self.con
         """Check if hotspot is currently running."""
         return bool(self._hostapd_process and self._hostapd_process.poll() is None)
 
+    def restart(self, new_config: Optional[HotSpotchiConfig] = None) -> HotspotState:
+        """Restart the hotspot with optional new configuration.
+
+        Args:
+            new_config: New configuration to use (optional)
+
+        Returns:
+            New hotspot state after restart
+        """
+        was_running = self.is_running()
+
+        if was_running:
+            self.stop()
+
+        if new_config:
+            self.config = new_config
+
+        if was_running or new_config:
+            return self.start()
+
+        return self.get_state()
+
+    def update_config(self, new_config: HotSpotchiConfig) -> None:
+        """Update configuration without restarting.
+
+        Args:
+            new_config: New configuration to store
+        """
+        self.config = new_config
+
     def get_state(self) -> HotspotState:
         """Get current hotspot state."""
         if not self.is_running():

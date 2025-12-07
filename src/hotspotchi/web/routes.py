@@ -2,6 +2,7 @@
 API routes for HotSpotchi web dashboard.
 """
 
+import os
 from datetime import datetime, timedelta
 from typing import Optional
 
@@ -10,6 +11,7 @@ from pydantic import BaseModel
 
 from hotspotchi.characters import CHARACTERS, SPECIAL_SSIDS
 from hotspotchi.config import HotSpotchiConfig, MacMode, SsidMode
+from hotspotchi.hotspot import HotspotManager
 from hotspotchi.mac import create_mac_address, format_mac
 from hotspotchi.selection import (
     get_seconds_until_midnight,
@@ -20,8 +22,22 @@ from hotspotchi.ssid import resolve_ssid
 
 router = APIRouter()
 
-# Global config (in production, this would be persisted)
+# Global config and hotspot manager
 _current_config = HotSpotchiConfig()
+_hotspot_manager: Optional[HotspotManager] = None
+
+
+def _get_hotspot_manager() -> HotspotManager:
+    """Get or create the global hotspot manager."""
+    global _hotspot_manager
+    if _hotspot_manager is None:
+        _hotspot_manager = HotspotManager(_current_config)
+    return _hotspot_manager
+
+
+def _is_root() -> bool:
+    """Check if running with root privileges."""
+    return os.geteuid() == 0
 
 
 class StatusResponse(BaseModel):
@@ -36,6 +52,10 @@ class StatusResponse(BaseModel):
     seconds_until_change: Optional[int]
     total_characters: int
     total_special_ssids: int
+    hotspot_running: bool
+    is_root: bool
+    fixed_character_index: int
+    special_ssid_index: int
 
 
 class CharacterResponse(BaseModel):
@@ -81,6 +101,7 @@ class ConfigUpdate(BaseModel):
 async def get_status() -> StatusResponse:
     """Get current hotspot status."""
     config = _current_config
+    manager = _get_hotspot_manager()
 
     ssid, special_char = resolve_ssid(config)
     character = select_character(config)
@@ -105,6 +126,10 @@ async def get_status() -> StatusResponse:
         seconds_until_change=seconds_remaining,
         total_characters=len(CHARACTERS),
         total_special_ssids=len(SPECIAL_SSIDS),
+        hotspot_running=manager.is_running(),
+        is_root=_is_root(),
+        fixed_character_index=config.fixed_character_index,
+        special_ssid_index=config.special_ssid_index,
     )
 
 
@@ -254,32 +279,51 @@ async def update_config(update: ConfigUpdate) -> dict:
 
 
 @router.post("/character/{index}")
-async def set_character(index: int) -> dict:
-    """Set a specific character (switches to fixed mode)."""
+async def set_character(index: int, apply: bool = False) -> dict:
+    """Set a specific character (updates fixed_character_index without changing mode).
+
+    Args:
+        index: Character index to set
+        apply: If True and running as root, restart hotspot to apply changes
+    """
     global _current_config
 
     if not 0 <= index < len(CHARACTERS):
         raise HTTPException(status_code=400, detail="Invalid character index")
 
+    # Only update the character index, don't change the mode
     _current_config = HotSpotchiConfig(
         **{
             **_current_config.model_dump(),
-            "mac_mode": MacMode.FIXED,
             "fixed_character_index": index,
         }
     )
 
     char = CHARACTERS[index]
+    applied = False
+
+    if apply and _is_root():
+        manager = _get_hotspot_manager()
+        if manager.is_running():
+            manager.restart(_current_config)
+            applied = True
+
     return {
         "status": "ok",
         "character": char.name,
         "mac_address": format_mac(create_mac_address(char)),
+        "applied": applied,
     }
 
 
 @router.post("/ssid/{index}")
-async def set_ssid(index: int) -> dict:
-    """Set a specific special SSID."""
+async def set_ssid(index: int, apply: bool = False) -> dict:
+    """Set a specific special SSID.
+
+    Args:
+        index: SSID index to set
+        apply: If True and running as root, restart hotspot to apply changes
+    """
     global _current_config
 
     if not 0 <= index < len(SPECIAL_SSIDS):
@@ -294,8 +338,101 @@ async def set_ssid(index: int) -> dict:
     )
 
     ssid = SPECIAL_SSIDS[index]
+    applied = False
+
+    if apply and _is_root():
+        manager = _get_hotspot_manager()
+        if manager.is_running():
+            manager.restart(_current_config)
+            applied = True
+
     return {
         "status": "ok",
         "character": ssid.character_name,
         "ssid": ssid.ssid,
+        "applied": applied,
+    }
+
+
+@router.post("/hotspot/start")
+async def start_hotspot() -> dict:
+    """Start the WiFi hotspot."""
+    if not _is_root():
+        raise HTTPException(
+            status_code=403,
+            detail="Must run as root to control hotspot. Use: sudo hotspotchi-web",
+        )
+
+    manager = _get_hotspot_manager()
+    if manager.is_running():
+        return {"status": "ok", "message": "Hotspot already running"}
+
+    try:
+        manager.update_config(_current_config)
+        state = manager.start()
+        return {
+            "status": "ok",
+            "message": "Hotspot started",
+            "ssid": state.ssid,
+            "mac_address": state.mac_address,
+            "character": state.character_name,
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e)) from None
+
+
+@router.post("/hotspot/stop")
+async def stop_hotspot() -> dict:
+    """Stop the WiFi hotspot."""
+    if not _is_root():
+        raise HTTPException(
+            status_code=403,
+            detail="Must run as root to control hotspot. Use: sudo hotspotchi-web",
+        )
+
+    manager = _get_hotspot_manager()
+    if not manager.is_running():
+        return {"status": "ok", "message": "Hotspot not running"}
+
+    manager.stop()
+    return {"status": "ok", "message": "Hotspot stopped"}
+
+
+@router.post("/hotspot/restart")
+async def restart_hotspot() -> dict:
+    """Restart the WiFi hotspot with current configuration."""
+    if not _is_root():
+        raise HTTPException(
+            status_code=403,
+            detail="Must run as root to control hotspot. Use: sudo hotspotchi-web",
+        )
+
+    manager = _get_hotspot_manager()
+
+    try:
+        state = manager.restart(_current_config)
+        return {
+            "status": "ok",
+            "message": "Hotspot restarted",
+            "ssid": state.ssid,
+            "mac_address": state.mac_address,
+            "character": state.character_name,
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e)) from None
+
+
+@router.get("/hotspot/status")
+async def get_hotspot_status() -> dict:
+    """Get current hotspot running status."""
+    manager = _get_hotspot_manager()
+    state = manager.get_state()
+
+    return {
+        "running": state.running,
+        "ssid": state.ssid,
+        "mac_address": state.mac_address,
+        "character": state.character_name,
+        "ip_address": state.ip_address,
+        "is_root": _is_root(),
     }
