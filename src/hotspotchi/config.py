@@ -106,6 +106,10 @@ class HotSpotchiConfig(BaseModel):
         default=Path("/tmp/hotspotchi_cycle.txt"),
         description="File to persist cycle position",
     )
+    include_special_ssids: bool = Field(
+        default=True,
+        description="Include special SSID characters in random/cycle rotation",
+    )
 
     # Security - password prevents unwanted connections
     # Tamagotchi only needs to detect the SSID, not connect

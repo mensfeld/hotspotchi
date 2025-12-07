@@ -18,8 +18,7 @@ from typing import Optional
 
 from hotspotchi.config import HotSpotchiConfig
 from hotspotchi.mac import create_mac_address, format_mac
-from hotspotchi.selection import generate_daily_password, select_character
-from hotspotchi.ssid import resolve_ssid
+from hotspotchi.selection import generate_daily_password, select_combined
 
 
 @dataclass
@@ -351,24 +350,30 @@ dhcp-range={self.config.dhcp_range_start},{self.config.dhcp_range_end},{self.con
         # Get effective interface for AP
         ap_interface = self._get_effective_interface()
 
-        # Get SSID and character info
-        ssid, special_char = resolve_ssid(self.config)
-        character = select_character(self.config)
+        # Select character using combined pool (MAC + special SSIDs)
+        selection = select_combined(self.config)
 
-        # Set MAC address if we have a character
+        # Determine SSID and MAC based on selection
         mac_address = None
-        char_name = special_char  # Special char takes precedence
+        char_name = None
 
-        if character:
+        if selection.is_special_ssid:
+            # Special SSID selected - use special SSID name, no MAC change needed
+            ssid = selection.ssid
+            char_name = selection.name
+        elif selection.character:
+            # MAC character selected - use default SSID, spoof MAC
+            ssid = self.config.default_ssid
+            char_name = selection.name
             self._original_mac = self._get_current_mac(ap_interface)
-            mac_address = create_mac_address(character)
+            mac_address = create_mac_address(selection.character)
             if not self._set_mac_address(mac_address):
                 mac_address = None  # Failed to set, will use default
             else:
                 mac_address = format_mac(mac_address)
-
-            if not char_name:
-                char_name = character.name
+        else:
+            # No selection (disabled mode)
+            ssid = self.config.default_ssid
 
         # Bring interface up
         self._run_command(f"ip link set {ap_interface} up")
@@ -511,10 +516,20 @@ dhcp-range={self.config.dhcp_range_start},{self.config.dhcp_range_end},{self.con
                 ip_address="",
             )
 
-        ssid, special_char = resolve_ssid(self.config)
-        character = select_character(self.config)
-        mac_address = format_mac(create_mac_address(character)) if character else None
-        char_name = special_char or (character.name if character else None)
+        selection = select_combined(self.config)
+
+        if selection.is_special_ssid:
+            ssid = selection.ssid
+            char_name = selection.name
+            mac_address = None
+        elif selection.character:
+            ssid = self.config.default_ssid
+            char_name = selection.name
+            mac_address = format_mac(create_mac_address(selection.character))
+        else:
+            ssid = self.config.default_ssid
+            char_name = None
+            mac_address = None
 
         return HotspotState(
             running=True,

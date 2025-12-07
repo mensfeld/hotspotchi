@@ -7,16 +7,52 @@ Implements all five character selection modes:
 - cycle: Progress through characters in order
 - fixed: Always use specific character
 - disabled: No character selection
+
+When include_special_ssids is enabled, special SSID characters
+are included in the rotation pool alongside MAC-based characters.
 """
 
 import random
+from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
-from hotspotchi.characters import CHARACTERS, Character
+from hotspotchi.characters import CHARACTERS, SPECIAL_SSIDS, Character, SpecialSSID
 from hotspotchi.config import HotSpotchiConfig, MacMode
 from hotspotchi.exclusions import get_exclusion_manager
+
+
+@dataclass
+class SelectionResult:
+    """Result of character selection.
+
+    Can be either a MAC-based character or a special SSID character.
+    """
+
+    character: Optional[Character] = None
+    special_ssid: Optional[SpecialSSID] = None
+
+    @property
+    def name(self) -> Optional[str]:
+        """Get the character name."""
+        if self.special_ssid:
+            return self.special_ssid.character_name
+        if self.character:
+            return self.character.name
+        return None
+
+    @property
+    def is_special_ssid(self) -> bool:
+        """Check if this is a special SSID selection."""
+        return self.special_ssid is not None
+
+    @property
+    def ssid(self) -> Optional[str]:
+        """Get the SSID if this is a special SSID selection."""
+        if self.special_ssid:
+            return self.special_ssid.ssid
+        return None
 
 
 def get_day_number(date: Optional[datetime] = None) -> int:
@@ -148,6 +184,88 @@ def select_character(
         return available[index]
 
     return None
+
+
+def get_active_special_ssids(respect_exclusions: bool = True) -> list[tuple[int, SpecialSSID]]:
+    """Get all active special SSIDs with their indices.
+
+    Args:
+        respect_exclusions: If True, filter out excluded SSIDs
+
+    Returns:
+        List of (index, SpecialSSID) tuples
+    """
+    exclusion_manager = get_exclusion_manager()
+    result = []
+    for i, ssid in enumerate(SPECIAL_SSIDS):
+        if not ssid.active:
+            continue
+        if respect_exclusions and exclusion_manager.is_ssid_excluded(i):
+            continue
+        result.append((i, ssid))
+    return result
+
+
+def select_combined(
+    config: HotSpotchiConfig,
+    current_date: Optional[datetime] = None,
+    respect_exclusions: bool = True,
+) -> SelectionResult:
+    """Select a character from the combined pool of MAC and special SSID characters.
+
+    When config.include_special_ssids is True, special SSIDs are included in the
+    random/daily_random/cycle rotation. When a special SSID is selected, the
+    result will have is_special_ssid=True and provide the special SSID name.
+
+    Args:
+        config: Configuration with mac_mode and related settings
+        current_date: Override current date (for testing)
+        respect_exclusions: If True, excluded characters won't be selected
+
+    Returns:
+        SelectionResult containing either a Character or SpecialSSID
+    """
+    if config.mac_mode == MacMode.DISABLED:
+        return SelectionResult()
+
+    # Fixed mode - just use the regular character selection
+    if config.mac_mode == MacMode.FIXED:
+        char = select_character(config, CHARACTERS, current_date, respect_exclusions)
+        return SelectionResult(character=char)
+
+    # Get available MAC characters
+    available_chars = list(get_available_characters(CHARACTERS, respect_exclusions))
+
+    # Get active special SSIDs if enabled (respecting exclusions)
+    special_ssid_items: list[tuple[int, SpecialSSID]] = []
+    if config.include_special_ssids:
+        special_ssid_items = get_active_special_ssids(respect_exclusions)
+
+    # Build combined pool: MAC characters first, then special SSIDs
+    total_count = len(available_chars) + len(special_ssid_items)
+
+    if total_count == 0:
+        return SelectionResult()
+
+    # Select an index from the combined pool
+    if config.mac_mode == MacMode.DAILY_RANDOM:
+        day = get_day_number(current_date)
+        random.seed(day)
+        selected_index = random.randint(0, total_count - 1)
+    elif config.mac_mode == MacMode.RANDOM:
+        selected_index = random.randint(0, total_count - 1)
+    elif config.mac_mode == MacMode.CYCLE:
+        selected_index = get_cycle_index(config.cycle_file, total_count)
+    else:
+        return SelectionResult()
+
+    # Determine if it's a MAC character or special SSID
+    if selected_index < len(available_chars):
+        return SelectionResult(character=available_chars[selected_index])
+    else:
+        ssid_index = selected_index - len(available_chars)
+        _, ssid = special_ssid_items[ssid_index]
+        return SelectionResult(special_ssid=ssid)
 
 
 def get_next_character(
