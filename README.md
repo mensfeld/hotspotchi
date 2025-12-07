@@ -143,6 +143,40 @@ The dashboard shows:
 - Upcoming characters (cycle mode)
 - Searchable character browser
 - Special SSID selector
+- Character exclusion controls
+
+### Character Exclusions
+
+Want to keep the "discovery" aspect of Tama Search? You can exclude specific characters from the rotation modes (daily_random, random, cycle), so you won't encounter them at home.
+
+**Via Web Dashboard:**
+- Hover over any character and click the `-` button to exclude it
+- Excluded characters show with an `X` badge and appear faded
+- Use the filter dropdown to view "Excluded Only" or "Available Only"
+- Click "Include All" to reset all exclusions
+
+**Via API:**
+```bash
+# Exclude a character
+curl -X POST http://pi-address:8080/api/characters/5/exclude
+
+# Include a character
+curl -X POST http://pi-address:8080/api/characters/5/include
+
+# Toggle exclusion status
+curl -X POST http://pi-address:8080/api/characters/5/toggle-exclusion
+
+# Get all exclusions
+curl http://pi-address:8080/api/exclusions
+
+# Clear all exclusions
+curl -X DELETE http://pi-address:8080/api/exclusions
+```
+
+**Notes:**
+- Exclusions are stored in `/var/lib/hotspotchi/exclusions.json`
+- Fixed mode ignores exclusions (you explicitly chose that character)
+- If all characters are excluded, the system falls back to using all characters
 
 ### As a Service
 
