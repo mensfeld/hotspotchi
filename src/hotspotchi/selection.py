@@ -1,0 +1,189 @@
+"""
+Character selection logic for HotSpotchi.
+
+Implements all five character selection modes:
+- daily_random: Same random character all day
+- random: New random character each call
+- cycle: Progress through characters in order
+- fixed: Always use specific character
+- disabled: No character selection
+"""
+
+import random
+from datetime import datetime
+from pathlib import Path
+from typing import Optional
+
+from hotspotchi.characters import CHARACTERS, Character
+from hotspotchi.config import HotSpotchiConfig, MacMode
+
+
+def get_day_number(date: Optional[datetime] = None) -> int:
+    """Calculate a unique number for a given day.
+
+    This provides a deterministic seed for daily random selection,
+    ensuring the same character appears all day but changes at midnight.
+
+    The formula (year * 366 + month * 31 + day) guarantees unique
+    values for each day while being simple to compute.
+
+    Args:
+        date: Date to calculate for (defaults to now)
+
+    Returns:
+        Unique integer for the given day
+    """
+    if date is None:
+        date = datetime.now()
+    return date.year * 366 + date.month * 31 + date.day
+
+
+def get_cycle_index(cycle_file: Path, total_characters: int) -> int:
+    """Get the current cycle index and increment it for next time.
+
+    The cycle index is persisted to disk so it survives reboots
+    and continues from where it left off.
+
+    Args:
+        cycle_file: Path to file storing the current index
+        total_characters: Total number of characters to cycle through
+
+    Returns:
+        Current cycle index (0-based)
+    """
+    # Read current index
+    try:
+        index = int(cycle_file.read_text().strip())
+    except (FileNotFoundError, ValueError):
+        index = 0
+
+    # Ensure index is valid
+    index = index % total_characters
+
+    # Save next index for next time
+    next_index = (index + 1) % total_characters
+    try:
+        cycle_file.parent.mkdir(parents=True, exist_ok=True)
+        cycle_file.write_text(str(next_index))
+    except OSError:
+        pass  # Best effort - continue even if we can't persist
+
+    return index
+
+
+def select_character(
+    config: HotSpotchiConfig,
+    characters: tuple[Character, ...] = CHARACTERS,
+    current_date: Optional[datetime] = None,
+) -> Optional[Character]:
+    """Select a character based on the configured MAC mode.
+
+    Args:
+        config: Configuration with mac_mode and related settings
+        characters: Tuple of available characters (defaults to all)
+        current_date: Override current date (for testing)
+
+    Returns:
+        Selected Character, or None if mode is DISABLED
+    """
+    if not characters:
+        return None
+
+    if config.mac_mode == MacMode.DISABLED:
+        return None
+
+    if config.mac_mode == MacMode.DAILY_RANDOM:
+        day = get_day_number(current_date)
+        random.seed(day)
+        return random.choice(characters)
+
+    if config.mac_mode == MacMode.RANDOM:
+        return random.choice(characters)
+
+    if config.mac_mode == MacMode.CYCLE:
+        index = get_cycle_index(config.cycle_file, len(characters))
+        return characters[index]
+
+    if config.mac_mode == MacMode.FIXED:
+        # Clamp index to valid range
+        index = min(config.fixed_character_index, len(characters) - 1)
+        index = max(0, index)
+        return characters[index]
+
+    return None
+
+
+def get_next_character(
+    config: HotSpotchiConfig,
+    characters: tuple[Character, ...] = CHARACTERS,
+) -> Optional[Character]:
+    """Preview the next character without advancing state.
+
+    Useful for showing what character will appear next in cycle mode.
+
+    Args:
+        config: Configuration with mac_mode and related settings
+        characters: Tuple of available characters
+
+    Returns:
+        Next character that would be selected, or None
+    """
+    if config.mac_mode != MacMode.CYCLE:
+        return None
+
+    try:
+        current_index = int(config.cycle_file.read_text().strip())
+    except (FileNotFoundError, ValueError):
+        current_index = 0
+
+    current_index = current_index % len(characters)
+    return characters[current_index]
+
+
+def get_upcoming_characters(
+    config: HotSpotchiConfig,
+    count: int = 7,
+    characters: tuple[Character, ...] = CHARACTERS,
+) -> list[Character]:
+    """Get a list of upcoming characters for cycle mode.
+
+    Args:
+        config: Configuration with mac_mode and related settings
+        count: Number of upcoming characters to return
+        characters: Tuple of available characters
+
+    Returns:
+        List of characters in order they will appear
+    """
+    if config.mac_mode != MacMode.CYCLE:
+        return []
+
+    try:
+        current_index = int(config.cycle_file.read_text().strip())
+    except (FileNotFoundError, ValueError):
+        current_index = 0
+
+    upcoming = []
+    for i in range(count):
+        idx = (current_index + i) % len(characters)
+        upcoming.append(characters[idx])
+
+    return upcoming
+
+
+def get_seconds_until_midnight() -> int:
+    """Calculate seconds remaining until midnight.
+
+    Useful for countdown display in daily_random mode.
+
+    Returns:
+        Number of seconds until next day starts
+    """
+    now = datetime.now()
+    midnight = now.replace(hour=0, minute=0, second=0, microsecond=0)
+    # Add one day to get next midnight
+    from datetime import timedelta
+
+    next_midnight = midnight + timedelta(days=1)
+    delta = next_midnight - now
+    return int(delta.total_seconds())

@@ -1,0 +1,73 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended",
+    ":dependencyDashboard",
+    ":semanticCommits"
+  ],
+  "labels": ["dependencies"],
+  "stabilityDays": 7,
+  "prCreation": "not-pending",
+  "timezone": "UTC",
+  "schedule": ["before 6am on monday"],
+  "packageRules": [
+    {
+      "description": "Python dependencies - 7 day stability",
+      "matchManagers": ["pip_requirements", "pip-compile", "pep621"],
+      "groupName": "python dependencies",
+      "stabilityDays": 7
+    },
+    {
+      "description": "GitHub Actions - faster updates",
+      "matchManagers": ["github-actions"],
+      "groupName": "github actions",
+      "automerge": true,
+      "automergeType": "pr",
+      "stabilityDays": 3
+    },
+    {
+      "description": "Development dependencies - can automerge",
+      "matchDepTypes": ["devDependencies"],
+      "automerge": true,
+      "automergeType": "pr"
+    },
+    {
+      "description": "Major version updates need review",
+      "matchUpdateTypes": ["major"],
+      "labels": ["dependencies", "major"],
+      "automerge": false,
+      "stabilityDays": 14
+    },
+    {
+      "description": "Trusted packages can automerge minor/patch",
+      "matchUpdateTypes": ["minor", "patch"],
+      "matchPackageNames": [
+        "pytest",
+        "pytest-cov",
+        "pytest-asyncio",
+        "ruff",
+        "mypy",
+        "fastapi",
+        "uvicorn",
+        "pydantic",
+        "click",
+        "httpx"
+      ],
+      "automerge": true,
+      "automergeType": "pr"
+    },
+    {
+      "description": "Security updates bypass stability days",
+      "matchUpdateTypes": ["patch"],
+      "matchPackagePatterns": ["*"],
+      "vulnerabilityAlerts": {
+        "labels": ["security"],
+        "stabilityDays": 0
+      }
+    }
+  ],
+  "vulnerabilityAlerts": {
+    "enabled": true,
+    "labels": ["security"]
+  }
+}

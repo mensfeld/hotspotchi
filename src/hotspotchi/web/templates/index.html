@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="cupcake">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HotSpotchi Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@4.4.24/dist/full.min.css" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .character-btn {
+            transition: all 0.2s ease;
+        }
+        .character-btn:hover {
+            transform: scale(1.05);
+        }
+        .character-btn.selected {
+            ring: 2px;
+            ring-primary;
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-base-200">
+    <!-- Navbar -->
+    <div class="navbar bg-primary text-primary-content shadow-lg">
+        <div class="flex-1">
+            <span class="text-xl font-bold px-4">HotSpotchi</span>
+            <span class="badge badge-ghost">v{{ version }}</span>
+        </div>
+        <div class="flex-none gap-2">
+            <div class="badge badge-secondary" id="status-badge">Loading...</div>
+            <div class="dropdown dropdown-end">
+                <label tabindex="0" class="btn btn-ghost btn-circle">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+                    </svg>
+                </label>
+                <ul tabindex="0" class="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52">
+                    <li><a onclick="setMacMode('daily_random')">Daily Random</a></li>
+                    <li><a onclick="setMacMode('random')">Random</a></li>
+                    <li><a onclick="setMacMode('cycle')">Cycle</a></li>
+                    <li><a onclick="setMacMode('fixed')">Fixed</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <main class="container mx-auto p-4 max-w-5xl">
+        <!-- Current Status Card -->
+        <div class="card bg-base-100 shadow-xl mb-6">
+            <div class="card-body">
+                <h2 class="card-title text-2xl mb-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0" />
+                    </svg>
+                    Current Broadcast
+                </h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="stat bg-base-200 rounded-lg">
+                        <div class="stat-title">SSID</div>
+                        <div class="stat-value text-lg truncate" id="current-ssid">-</div>
+                        <div class="stat-desc" id="ssid-mode-label">Normal mode</div>
+                    </div>
+                    <div class="stat bg-base-200 rounded-lg">
+                        <div class="stat-title">MAC Address</div>
+                        <div class="stat-value text-sm font-mono" id="current-mac">-</div>
+                        <div class="stat-desc" id="mac-mode-label">Daily random</div>
+                    </div>
+                    <div class="stat bg-base-200 rounded-lg">
+                        <div class="stat-title">Character</div>
+                        <div class="stat-value text-lg" id="current-character">-</div>
+                        <div class="stat-desc">Meeting this Tama!</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Countdown Timer (for daily mode) -->
+        <div class="card bg-base-100 shadow-xl mb-6" id="countdown-card" style="display: none;">
+            <div class="card-body items-center text-center">
+                <h2 class="card-title">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    Next Character In
+                </h2>
+                <div class="grid grid-flow-col gap-5 text-center auto-cols-max mt-4">
+                    <div class="flex flex-col p-2 bg-neutral rounded-box text-neutral-content">
+                        <span class="countdown font-mono text-5xl" id="hours">
+                            <span style="--value:0;"></span>
+                        </span>
+                        hours
+                    </div>
+                    <div class="flex flex-col p-2 bg-neutral rounded-box text-neutral-content">
+                        <span class="countdown font-mono text-5xl" id="minutes">
+                            <span style="--value:0;"></span>
+                        </span>
+                        min
+                    </div>
+                    <div class="flex flex-col p-2 bg-neutral rounded-box text-neutral-content">
+                        <span class="countdown font-mono text-5xl" id="seconds">
+                            <span style="--value:0;"></span>
+                        </span>
+                        sec
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Upcoming Characters (for cycle mode) -->
+        <div class="card bg-base-100 shadow-xl mb-6" id="upcoming-card" style="display: none;">
+            <div class="card-body">
+                <h2 class="card-title">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+                    </svg>
+                    Upcoming Characters
+                </h2>
+                <div class="overflow-x-auto">
+                    <table class="table table-zebra">
+                        <thead>
+                            <tr>
+                                <th>Order</th>
+                                <th>Character</th>
+                                <th>MAC Address</th>
+                            </tr>
+                        </thead>
+                        <tbody id="upcoming-list">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabs for Characters/SSIDs -->
+        <div class="tabs tabs-boxed mb-4 justify-center">
+            <a class="tab tab-active" id="tab-characters" onclick="showTab('characters')">MAC Characters</a>
+            <a class="tab" id="tab-ssids" onclick="showTab('ssids')">Special SSIDs</a>
+        </div>
+
+        <!-- Character Selector -->
+        <div class="card bg-base-100 shadow-xl" id="characters-panel">
+            <div class="card-body">
+                <div class="flex flex-wrap gap-2 mb-4">
+                    <input type="text" placeholder="Search characters..."
+                           class="input input-bordered flex-grow"
+                           id="character-search"
+                           oninput="filterCharacters()">
+                    <select class="select select-bordered" id="season-filter" onchange="filterCharacters()">
+                        <option value="">All Seasons</option>
+                        <option value="spring">Spring</option>
+                        <option value="summer">Summer</option>
+                        <option value="fall">Fall</option>
+                        <option value="winter">Winter</option>
+                    </select>
+                </div>
+                <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2"
+                     id="character-grid">
+                    <!-- Characters populated by JavaScript -->
+                </div>
+                <div class="text-center text-sm text-base-content/60 mt-4">
+                    <span id="character-count">0</span> characters
+                </div>
+            </div>
+        </div>
+
+        <!-- Special SSIDs Panel -->
+        <div class="card bg-base-100 shadow-xl" id="ssids-panel" style="display: none;">
+            <div class="card-body">
+                <div class="form-control mb-4">
+                    <label class="label cursor-pointer justify-start gap-2">
+                        <input type="checkbox" class="checkbox checkbox-primary" id="active-only" onchange="loadSSIDs()">
+                        <span class="label-text">Show active only</span>
+                    </label>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="ssid-grid">
+                    <!-- SSIDs populated by JavaScript -->
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer footer-center p-4 bg-base-300 text-base-content mt-8">
+        <div>
+            <p>HotSpotchi - Meet Tamagotchi characters via WiFi!</p>
+        </div>
+    </footer>
+
+    <script>
+        let countdownInterval;
+        let secondsRemaining = 0;
+        let allCharacters = [];
+        let currentMacMode = 'daily_random';
+
+        async function loadStatus() {
+            try {
+                const response = await fetch('/api/status');
+                const data = await response.json();
+
+                document.getElementById('current-ssid').textContent = data.ssid;
+                document.getElementById('current-mac').textContent = data.mac_address || 'Default';
+                document.getElementById('current-character').textContent = data.character_name || 'None';
+                document.getElementById('status-badge').textContent = data.mac_mode.replace('_', ' ');
+                document.getElementById('mac-mode-label').textContent = data.mac_mode.replace('_', ' ') + ' mode';
+                document.getElementById('ssid-mode-label').textContent = data.ssid_mode + ' mode';
+
+                currentMacMode = data.mac_mode;
+
+                // Show countdown for daily mode
+                if (data.mac_mode === 'daily_random' && data.seconds_until_change) {
+                    document.getElementById('countdown-card').style.display = 'block';
+                    document.getElementById('upcoming-card').style.display = 'none';
+                    secondsRemaining = data.seconds_until_change;
+                    startCountdown();
+                } else {
+                    document.getElementById('countdown-card').style.display = 'none';
+                }
+
+                // Show upcoming for cycle mode
+                if (data.mac_mode === 'cycle') {
+                    document.getElementById('upcoming-card').style.display = 'block';
+                    document.getElementById('countdown-card').style.display = 'none';
+                    loadUpcoming();
+                } else if (data.mac_mode !== 'daily_random') {
+                    document.getElementById('upcoming-card').style.display = 'none';
+                }
+            } catch (error) {
+                console.error('Failed to load status:', error);
+                document.getElementById('status-badge').textContent = 'Error';
+            }
+        }
+
+        function startCountdown() {
+            if (countdownInterval) clearInterval(countdownInterval);
+
+            updateCountdownDisplay();
+            countdownInterval = setInterval(() => {
+                if (secondsRemaining <= 0) {
+                    loadStatus();
+                    return;
+                }
+                secondsRemaining--;
+                updateCountdownDisplay();
+            }, 1000);
+        }
+
+        function updateCountdownDisplay() {
+            const hours = Math.floor(secondsRemaining / 3600);
+            const minutes = Math.floor((secondsRemaining % 3600) / 60);
+            const secs = secondsRemaining % 60;
+
+            document.querySelector('#hours span').style.setProperty('--value', hours);
+            document.querySelector('#minutes span').style.setProperty('--value', minutes);
+            document.querySelector('#seconds span').style.setProperty('--value', secs);
+        }
+
+        async function loadCharacters() {
+            try {
+                const response = await fetch('/api/characters');
+                allCharacters = await response.json();
+                renderCharacters(allCharacters);
+            } catch (error) {
+                console.error('Failed to load characters:', error);
+            }
+        }
+
+        function renderCharacters(characters) {
+            const grid = document.getElementById('character-grid');
+            grid.innerHTML = characters.map(char => `
+                <button class="btn btn-outline btn-sm character-btn"
+                        onclick="selectCharacter(${char.index})"
+                        data-name="${char.name.toLowerCase()}"
+                        data-season="${char.season || ''}"
+                        title="${char.mac_address}">
+                    ${char.name}
+                    ${char.season ? '<span class="badge badge-xs badge-accent ml-1">' + char.season.charAt(0).toUpperCase() + '</span>' : ''}
+                </button>
+            `).join('');
+            document.getElementById('character-count').textContent = characters.length;
+        }
+
+        function filterCharacters() {
+            const search = document.getElementById('character-search').value.toLowerCase();
+            const season = document.getElementById('season-filter').value;
+
+            let filtered = allCharacters;
+
+            if (search) {
+                filtered = filtered.filter(c => c.name.toLowerCase().includes(search));
+            }
+
+            if (season) {
+                filtered = filtered.filter(c => c.season === season);
+            }
+
+            renderCharacters(filtered);
+        }
+
+        async function loadSSIDs() {
+            try {
+                const activeOnly = document.getElementById('active-only').checked;
+                const response = await fetch(`/api/ssids?active_only=${activeOnly}`);
+                const ssids = await response.json();
+
+                const grid = document.getElementById('ssid-grid');
+                grid.innerHTML = ssids.map(ssid => `
+                    <div class="card bg-base-200 ${!ssid.active ? 'opacity-60' : ''}">
+                        <div class="card-body p-4">
+                            <h3 class="card-title text-sm">
+                                ${ssid.character_name}
+                                ${!ssid.active ? '<span class="badge badge-warning badge-sm">Inactive</span>' : ''}
+                            </h3>
+                            <p class="text-xs font-mono break-all">${ssid.ssid}</p>
+                            <p class="text-xs text-base-content/60">${ssid.notes}</p>
+                            <div class="card-actions justify-end mt-2">
+                                <button class="btn btn-primary btn-xs" onclick="selectSSID(${ssid.index})" ${!ssid.active ? 'disabled' : ''}>
+                                    Use This
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Failed to load SSIDs:', error);
+            }
+        }
+
+        async function loadUpcoming() {
+            try {
+                const response = await fetch('/api/upcoming?count=7');
+                const upcoming = await response.json();
+
+                const list = document.getElementById('upcoming-list');
+                list.innerHTML = upcoming.map(char => `
+                    <tr>
+                        <td>${char.position}</td>
+                        <td>${char.name}</td>
+                        <td class="font-mono text-sm">${char.mac_address}</td>
+                    </tr>
+                `).join('');
+            } catch (error) {
+                console.error('Failed to load upcoming:', error);
+            }
+        }
+
+        async function selectCharacter(index) {
+            try {
+                const response = await fetch(`/api/character/${index}`, { method: 'POST' });
+                if (response.ok) {
+                    const result = await response.json();
+                    showToast(`Selected: ${result.character}`);
+                    loadStatus();
+                }
+            } catch (error) {
+                console.error('Failed to select character:', error);
+                showToast('Error selecting character', 'error');
+            }
+        }
+
+        async function selectSSID(index) {
+            try {
+                const response = await fetch(`/api/ssid/${index}`, { method: 'POST' });
+                if (response.ok) {
+                    const result = await response.json();
+                    showToast(`Selected: ${result.character}`);
+                    loadStatus();
+                }
+            } catch (error) {
+                console.error('Failed to select SSID:', error);
+                showToast('Error selecting SSID', 'error');
+            }
+        }
+
+        async function setMacMode(mode) {
+            try {
+                const response = await fetch('/api/config', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ mac_mode: mode })
+                });
+                if (response.ok) {
+                    showToast(`Mode: ${mode.replace('_', ' ')}`);
+                    loadStatus();
+                }
+            } catch (error) {
+                console.error('Failed to set mode:', error);
+            }
+        }
+
+        function showTab(tab) {
+            document.getElementById('tab-characters').classList.toggle('tab-active', tab === 'characters');
+            document.getElementById('tab-ssids').classList.toggle('tab-active', tab === 'ssids');
+            document.getElementById('characters-panel').style.display = tab === 'characters' ? 'block' : 'none';
+            document.getElementById('ssids-panel').style.display = tab === 'ssids' ? 'block' : 'none';
+
+            if (tab === 'ssids') {
+                loadSSIDs();
+            }
+        }
+
+        function showToast(message, type = 'success') {
+            // Simple toast using alert for now
+            // In production, use a proper toast library
+            console.log(`${type}: ${message}`);
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            loadStatus();
+            loadCharacters();
+
+            // Refresh status every 30 seconds
+            setInterval(loadStatus, 30000);
+        });
+    </script>
+</body>
+</html>
