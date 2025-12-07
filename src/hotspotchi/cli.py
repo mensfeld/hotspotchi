@@ -12,7 +12,7 @@ import click
 
 from hotspotchi import __version__
 from hotspotchi.characters import CHARACTERS, SPECIAL_SSIDS
-from hotspotchi.config import HotSpotchiConfig, MacMode, SsidMode
+from hotspotchi.config import HotSpotchiConfig, MacMode, SsidMode, load_config
 from hotspotchi.hotspot import HotspotManager, run_hotspot
 from hotspotchi.mac import create_mac_address, format_mac
 from hotspotchi.selection import (
@@ -21,6 +21,9 @@ from hotspotchi.selection import (
     select_character,
 )
 from hotspotchi.ssid import resolve_ssid
+
+# Default config file location
+DEFAULT_CONFIG_PATH = Path("/etc/hotspotchi/config.yaml")
 
 
 @click.group()
@@ -36,54 +39,98 @@ def main(ctx: click.Context) -> None:
 
 @main.command()
 @click.option(
+    "--config",
+    "config_path",
+    type=click.Path(exists=False, path_type=Path),
+    default=None,
+    help="Path to config file (default: /etc/hotspotchi/config.yaml)",
+)
+@click.option(
     "--mac-mode",
     type=click.Choice(["daily_random", "random", "cycle", "fixed", "disabled"]),
-    default="daily_random",
-    help="Character selection mode",
+    default=None,
+    help="Character selection mode (overrides config file)",
 )
 @click.option(
     "--ssid-mode",
     type=click.Choice(["normal", "special", "custom"]),
-    default="normal",
-    help="SSID selection mode",
+    default=None,
+    help="SSID selection mode (overrides config file)",
 )
 @click.option("--ssid", default=None, help="Custom SSID (requires --ssid-mode=custom)")
 @click.option(
     "--special-index",
     type=int,
-    default=0,
+    default=None,
     help="Special SSID index (requires --ssid-mode=special)",
 )
 @click.option(
     "--character-index",
     type=int,
-    default=0,
+    default=None,
     help="Character index (requires --mac-mode=fixed)",
 )
-@click.option("--interface", default="wlan0", help="WiFi interface to use")
+@click.option("--interface", default=None, help="WiFi interface to use")
 @click.option("--password", default=None, help="WiFi password (8+ chars for WPA2)")
+@click.option(
+    "--concurrent/--no-concurrent",
+    default=None,
+    help="Enable/disable concurrent mode",
+)
 def start(
-    mac_mode: str,
-    ssid_mode: str,
+    config_path: Optional[Path],
+    mac_mode: Optional[str],
+    ssid_mode: Optional[str],
     ssid: Optional[str],
-    special_index: int,
-    character_index: int,
-    interface: str,
+    special_index: Optional[int],
+    character_index: Optional[int],
+    interface: Optional[str],
     password: Optional[str],
+    concurrent: Optional[bool],
 ) -> None:
     """Start the WiFi hotspot.
 
     The hotspot will run until you press Ctrl+C or send SIGTERM.
+    Loads settings from /etc/hotspotchi/config.yaml by default.
+    Command-line options override config file settings.
     """
-    config = HotSpotchiConfig(
-        mac_mode=MacMode(mac_mode),
-        ssid_mode=SsidMode(ssid_mode),
-        custom_ssid=ssid,
-        special_ssid_index=special_index,
-        fixed_character_index=character_index,
-        wifi_interface=interface,
-        wifi_password=password,
-    )
+    # Load config from file first
+    effective_path = config_path or DEFAULT_CONFIG_PATH
+    if effective_path.exists():
+        config = load_config(effective_path)
+        click.echo(f"Loaded config from {effective_path}")
+    else:
+        config = HotSpotchiConfig()
+        if config_path:
+            click.echo(f"Warning: Config file {config_path} not found, using defaults")
+
+    # Override with command-line options
+    overrides = {}
+    if mac_mode is not None:
+        overrides["mac_mode"] = MacMode(mac_mode)
+    if ssid_mode is not None:
+        overrides["ssid_mode"] = SsidMode(ssid_mode)
+    if ssid is not None:
+        overrides["custom_ssid"] = ssid
+    if special_index is not None:
+        overrides["special_ssid_index"] = special_index
+    if character_index is not None:
+        overrides["fixed_character_index"] = character_index
+    if interface is not None:
+        overrides["wifi_interface"] = interface
+    if password is not None:
+        overrides["wifi_password"] = password
+    if concurrent is not None:
+        overrides["concurrent_mode"] = concurrent
+
+    if overrides:
+        config = HotSpotchiConfig(**{**config.model_dump(), **overrides})
+
+    # Show concurrent mode status
+    if config.concurrent_mode:
+        click.echo("Concurrent mode: ENABLED (will create virtual AP interface)")
+    else:
+        click.echo("Concurrent mode: DISABLED (will take over WiFi interface)")
 
     run_hotspot(config)
 
