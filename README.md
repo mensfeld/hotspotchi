@@ -167,8 +167,10 @@ fixed_character_index: 0
 # For special mode - SSID index (0 = Angel & Devil)
 special_ssid_index: 0
 
-# Leave empty for open network
-wifi_password: ""
+# WPA2 password (default: HotSpotchi2024!)
+# Tamagotchi only needs to detect the network, not connect
+# Set to null/empty for open network (not recommended)
+wifi_password: "HotSpotchi2024!"
 
 # Web server settings
 web_host: "0.0.0.0"

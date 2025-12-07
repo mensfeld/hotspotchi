@@ -97,10 +97,11 @@ class HotSpotchiConfig(BaseModel):
         description="File to persist cycle position",
     )
 
-    # Security
+    # Security - default password prevents unwanted connections
+    # Tamagotchi only needs to detect the SSID, not connect
     wifi_password: Optional[str] = Field(
-        default=None,
-        description="WiFi password (None = open network)",
+        default="HotSpotchi2024!",
+        description="WiFi password (WPA2). Set to None for open network (not recommended)",
     )
 
     # Network configuration
