@@ -290,9 +290,7 @@ class TestHotspotManagerMACAddress:
     """Tests for MAC address operations."""
 
     @patch("hotspotchi.hotspot.Path")
-    def test_get_current_mac_success(
-        self, mock_path: MagicMock, config: HotSpotchiConfig
-    ):
+    def test_get_current_mac_success(self, mock_path: MagicMock, config: HotSpotchiConfig):
         """Should read MAC from sysfs."""
         mock_path.return_value.read_text.return_value = "aa:bb:cc:dd:ee:ff\n"
         manager = HotspotManager(config)
@@ -300,9 +298,7 @@ class TestHotspotManagerMACAddress:
         assert mac == "aa:bb:cc:dd:ee:ff"
 
     @patch("hotspotchi.hotspot.Path")
-    def test_get_current_mac_not_found(
-        self, mock_path: MagicMock, config: HotSpotchiConfig
-    ):
+    def test_get_current_mac_not_found(self, mock_path: MagicMock, config: HotSpotchiConfig):
         """Should return None if file not found."""
         mock_path.return_value.read_text.side_effect = FileNotFoundError()
         manager = HotspotManager(config)
@@ -409,9 +405,7 @@ class TestHotspotManagerConfigGeneration:
     @patch("subprocess.run")
     def test_create_hostapd_config_5ghz(self, mock_run: MagicMock):
         """Should use hw_mode=a for 5GHz channels."""
-        mock_run.return_value = MagicMock(
-            returncode=0, stdout="channel 36 (5180 MHz)"
-        )
+        mock_run.return_value = MagicMock(returncode=0, stdout="channel 36 (5180 MHz)")
         config = HotSpotchiConfig(concurrent_mode=True)
         manager = HotspotManager(config)
         config_path = manager._create_hostapd_config("5GHz_SSID")
@@ -438,9 +432,7 @@ class TestHotspotManagerServiceControl:
     """Tests for service control methods."""
 
     @patch("subprocess.run")
-    def test_stop_conflicting_services(
-        self, mock_run: MagicMock, config: HotSpotchiConfig
-    ):
+    def test_stop_conflicting_services(self, mock_run: MagicMock, config: HotSpotchiConfig):
         """Should stop conflicting services."""
         mock_run.return_value = MagicMock(returncode=0)
         manager = HotspotManager(config)
@@ -527,9 +519,7 @@ class TestHotspotManagerStartStop:
 
     @patch("subprocess.run")
     @patch("hotspotchi.hotspot.Path")
-    def test_stop_concurrent_removes_interface(
-        self, mock_path: MagicMock, mock_run: MagicMock
-    ):
+    def test_stop_concurrent_removes_interface(self, mock_path: MagicMock, mock_run: MagicMock):
         """Should remove virtual interface in concurrent mode."""
         mock_run.return_value = MagicMock(returncode=0)
         mock_path.return_value.exists.return_value = True
