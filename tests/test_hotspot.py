@@ -533,3 +533,214 @@ class TestHotspotManagerStartStop:
         # Should have called iw dev del
         calls_str = str(mock_run.call_args_list)
         assert "uap0" in calls_str
+
+    @patch("subprocess.run")
+    def test_stop_handles_hostapd_timeout(self, mock_run: MagicMock, config: HotSpotchiConfig):
+        """Should kill process if terminate times out."""
+        import subprocess
+
+        mock_run.return_value = MagicMock(returncode=0)
+        manager = HotspotManager(config)
+
+        # Create mock process that times out on wait
+        mock_process = MagicMock()
+        mock_process.wait.side_effect = subprocess.TimeoutExpired("hostapd", 5)
+        manager._hostapd_process = mock_process
+
+        manager.stop()
+
+        mock_process.terminate.assert_called_once()
+        mock_process.kill.assert_called_once()
+
+    @patch("subprocess.run")
+    def test_stop_handles_dnsmasq_timeout(self, mock_run: MagicMock, config: HotSpotchiConfig):
+        """Should kill dnsmasq if terminate times out."""
+        import subprocess
+
+        mock_run.return_value = MagicMock(returncode=0)
+        manager = HotspotManager(config)
+
+        # Create mock process that times out on wait
+        mock_process = MagicMock()
+        mock_process.wait.side_effect = subprocess.TimeoutExpired("dnsmasq", 5)
+        manager._dnsmasq_process = mock_process
+
+        manager.stop()
+
+        mock_process.terminate.assert_called_once()
+        mock_process.kill.assert_called_once()
+
+    @patch("subprocess.run")
+    def test_stop_cleans_config_files(self, mock_run: MagicMock, config: HotSpotchiConfig):
+        """Should remove config files if they exist."""
+        import tempfile
+        from pathlib import Path
+
+        mock_run.return_value = MagicMock(returncode=0)
+        manager = HotspotManager(config)
+
+        # Create temp files to represent configs
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".conf") as f:
+            hostapd_path = Path(f.name)
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".conf") as f:
+            dnsmasq_path = Path(f.name)
+
+        manager._hostapd_config = hostapd_path
+        manager._dnsmasq_config = dnsmasq_path
+
+        manager.stop()
+
+        assert not hostapd_path.exists()
+        assert not dnsmasq_path.exists()
+
+
+class TestHotspotManagerRestart:
+    """Tests for restart method."""
+
+    @patch("subprocess.run")
+    def test_restart_stops_and_starts(self, mock_run: MagicMock, config: HotSpotchiConfig):
+        """Should stop and start when running."""
+        mock_run.return_value = MagicMock(returncode=0)
+        manager = HotspotManager(config)
+
+        # Mock is_running to return True first, then False after stop
+        with (
+            patch.object(manager, "is_running", side_effect=[True, False]),
+            patch.object(manager, "stop") as mock_stop,
+            patch.object(manager, "start") as mock_start,
+        ):
+            mock_start.return_value = MagicMock()
+            manager.restart()
+            mock_stop.assert_called_once()
+            mock_start.assert_called_once()
+
+    @patch("subprocess.run")
+    def test_restart_with_new_config(self, mock_run: MagicMock, config: HotSpotchiConfig):
+        """Should update config on restart."""
+        mock_run.return_value = MagicMock(returncode=0)
+        manager = HotspotManager(config)
+
+        new_config = HotSpotchiConfig(wifi_interface="wlan1")
+
+        with (
+            patch.object(manager, "is_running", return_value=False),
+            patch.object(manager, "start") as mock_start,
+        ):
+            mock_start.return_value = MagicMock()
+            manager.restart(new_config)
+            assert manager.config == new_config
+            mock_start.assert_called_once()
+
+    @patch("subprocess.run")
+    def test_restart_not_running_no_new_config(self, mock_run: MagicMock, config: HotSpotchiConfig):
+        """Should return current state if not running and no new config."""
+        mock_run.return_value = MagicMock(returncode=0)
+        manager = HotspotManager(config)
+
+        with (
+            patch.object(manager, "is_running", return_value=False),
+            patch.object(manager, "get_state") as mock_state,
+        ):
+            mock_state.return_value = MagicMock()
+            result = manager.restart()
+            mock_state.assert_called_once()
+            assert result == mock_state.return_value
+
+
+class TestHotspotManagerUpdateConfig:
+    """Tests for update_config method."""
+
+    def test_update_config(self, config: HotSpotchiConfig):
+        """Should update config without restarting."""
+        manager = HotspotManager(config)
+        new_config = HotSpotchiConfig(wifi_interface="wlan1", default_ssid="NewSSID")
+
+        manager.update_config(new_config)
+
+        assert manager.config == new_config
+        assert manager.config.wifi_interface == "wlan1"
+        assert manager.config.default_ssid == "NewSSID"
+
+
+class TestHotspotManagerGetState:
+    """Tests for get_state method."""
+
+    @patch("subprocess.run")
+    def test_get_state_not_running(self, mock_run: MagicMock, config: HotSpotchiConfig):
+        """Should return empty state when not running."""
+        mock_run.return_value = MagicMock(returncode=1)  # pgrep returns 1 = not found
+        manager = HotspotManager(config)
+
+        state = manager.get_state()
+
+        assert state.running is False
+        assert state.ssid == ""
+        assert state.mac_address is None
+
+    @patch("subprocess.run")
+    @patch("hotspotchi.hotspot.select_combined")
+    def test_get_state_running_with_mac_character(
+        self, mock_select: MagicMock, mock_run: MagicMock, config: HotSpotchiConfig
+    ):
+        """Should return state with character info when running."""
+        from hotspotchi.characters import CHARACTERS
+        from hotspotchi.selection import SelectionResult
+
+        mock_run.return_value = MagicMock(returncode=0)  # pgrep returns 0 = running
+        mock_select.return_value = SelectionResult(
+            character=CHARACTERS[0],
+            special_ssid=None,
+        )
+
+        manager = HotspotManager(config)
+        state = manager.get_state()
+
+        assert state.running is True
+        assert state.ssid == config.default_ssid
+        assert state.character_name == CHARACTERS[0].name
+        assert state.mac_address is not None
+
+    @patch("subprocess.run")
+    @patch("hotspotchi.hotspot.select_combined")
+    def test_get_state_running_with_special_ssid(
+        self, mock_select: MagicMock, mock_run: MagicMock, config: HotSpotchiConfig
+    ):
+        """Should return state with special SSID info when running."""
+        from hotspotchi.characters import SPECIAL_SSIDS
+        from hotspotchi.selection import SelectionResult
+
+        mock_run.return_value = MagicMock(returncode=0)
+        mock_select.return_value = SelectionResult(
+            character=None,
+            special_ssid=SPECIAL_SSIDS[0],
+        )
+
+        manager = HotspotManager(config)
+        state = manager.get_state()
+
+        assert state.running is True
+        assert state.ssid == SPECIAL_SSIDS[0].ssid
+        assert state.character_name == SPECIAL_SSIDS[0].character_name
+        assert state.mac_address is None
+
+    @patch("subprocess.run")
+    @patch("hotspotchi.hotspot.select_combined")
+    def test_get_state_running_disabled_mode(
+        self, mock_select: MagicMock, mock_run: MagicMock, config: HotSpotchiConfig
+    ):
+        """Should return state with no character when disabled."""
+        from hotspotchi.selection import SelectionResult
+
+        mock_run.return_value = MagicMock(returncode=0)
+        mock_select.return_value = SelectionResult(
+            character=None,
+            special_ssid=None,
+        )
+
+        manager = HotspotManager(config)
+        state = manager.get_state()
+
+        assert state.running is True
+        assert state.ssid == config.default_ssid
+        assert state.character_name is None
+        assert state.mac_address is None
