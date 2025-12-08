@@ -249,11 +249,12 @@ class HotspotManager:
         # Use configured password
         return self.config.wifi_password
 
-    def _create_hostapd_config(self, ssid: str) -> Path:
+    def _create_hostapd_config(self, ssid: str, bssid: str | None = None) -> Path:
         """Create hostapd configuration file.
 
         Args:
             ssid: Network name to broadcast
+            bssid: MAC address (BSSID) to use, or None for default
 
         Returns:
             Path to temporary config file
@@ -276,6 +277,9 @@ macaddr_acl=0
 auth_algs=1
 ignore_broadcast_ssid=0
 """
+        # Set explicit BSSID for MAC-based character detection
+        if bssid:
+            config += f"bssid={bssid}\n"
 
         password = self._get_effective_password()
         if password:
@@ -394,8 +398,8 @@ dhcp-range={self.config.dhcp_range_start},{self.config.dhcp_range_end},{self.con
         # Configure IP
         self._configure_interface()
 
-        # Create config files
-        self._hostapd_config = self._create_hostapd_config(ssid)
+        # Create config files (pass MAC for BSSID setting in hostapd)
+        self._hostapd_config = self._create_hostapd_config(ssid, bssid=mac_address)
         self._dnsmasq_config = self._create_dnsmasq_config()
 
         # Start dnsmasq

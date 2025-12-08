@@ -1,5 +1,9 @@
 # HotSpotchi Changelog
 
+## 2.2.9 (2025-12-08)
+
+- [Fix] Fix MAC-based characters not detected by Tamagotchi - now explicitly sets BSSID in hostapd config
+
 ## 2.2.8 (2025-12-08)
 
 - [Fix] Fix daily_random mode not changing character at midnight - service now auto-restarts when day changes
