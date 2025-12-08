@@ -1,5 +1,5 @@
 """
-Character exclusion management for HotSpotchi.
+Character exclusion management for Hotspotchi.
 
 Allows users to exclude specific characters from rotation modes,
 keeping some discovery aspect of the game.

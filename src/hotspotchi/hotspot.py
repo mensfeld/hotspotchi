@@ -1,5 +1,5 @@
 """
-WiFi hotspot management for HotSpotchi.
+WiFi hotspot management for Hotspotchi.
 
 Handles the system-level integration with hostapd and dnsmasq
 to create WiFi access points on Raspberry Pi.
@@ -15,7 +15,7 @@ import time
 from dataclasses import dataclass
 from pathlib import Path
 
-from hotspotchi.config import HotSpotchiConfig, MacMode
+from hotspotchi.config import HotspotchiConfig, MacMode
 from hotspotchi.mac import create_mac_address, format_mac
 from hotspotchi.selection import generate_daily_password, get_day_number, select_combined
 
@@ -36,7 +36,7 @@ class HotspotState:
 class HotspotManager:
     """Manages WiFi access point lifecycle."""
 
-    def __init__(self, config: HotSpotchiConfig):
+    def __init__(self, config: HotspotchiConfig):
         self.config = config
         self._hostapd_process: subprocess.Popen | None = None
         self._dnsmasq_process: subprocess.Popen | None = None
@@ -500,7 +500,7 @@ dhcp-range={self.config.dhcp_range_start},{self.config.dhcp_range_end},{self.con
         result = self._run_command("pgrep -x hostapd")
         return result.returncode == 0
 
-    def restart(self, new_config: HotSpotchiConfig | None = None) -> HotspotState:
+    def restart(self, new_config: HotspotchiConfig | None = None) -> HotspotState:
         """Restart the hotspot with optional new configuration.
 
         Args:
@@ -522,7 +522,7 @@ dhcp-range={self.config.dhcp_range_start},{self.config.dhcp_range_end},{self.con
 
         return self.get_state()
 
-    def update_config(self, new_config: HotSpotchiConfig) -> None:
+    def update_config(self, new_config: HotspotchiConfig) -> None:
         """Update configuration without restarting.
 
         Args:
@@ -567,10 +567,10 @@ dhcp-range={self.config.dhcp_range_start},{self.config.dhcp_range_end},{self.con
         )
 
 
-def run_hotspot(config: HotSpotchiConfig) -> None:
+def run_hotspot(config: HotspotchiConfig) -> None:
     """Run the hotspot until interrupted.
 
-    This is the main entry point for running HotSpotchi as a service.
+    This is the main entry point for running Hotspotchi as a service.
     In daily_random mode, automatically restarts at midnight to pick up
     the new character for the day.
 
@@ -592,7 +592,7 @@ def run_hotspot(config: HotSpotchiConfig) -> None:
         state = manager.start()
         current_day = get_day_number()
 
-        print("HotSpotchi is running!")
+        print("Hotspotchi is running!")
         print(f"  SSID: {state.ssid}")
         print(f"  MAC: {state.mac_address or 'default'}")
         print(f"  Character: {state.character_name or 'none'}")

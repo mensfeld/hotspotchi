@@ -1,5 +1,5 @@
 """
-FastAPI application for HotSpotchi web dashboard.
+FastAPI application for Hotspotchi web dashboard.
 """
 
 from pathlib import Path
@@ -10,7 +10,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 from hotspotchi import __version__
-from hotspotchi.config import HotSpotchiConfig, load_config
+from hotspotchi.config import HotspotchiConfig, load_config
 from hotspotchi.web.routes import router
 
 # Default config file location
@@ -23,7 +23,7 @@ TEMPLATES_DIR = WEB_DIR / "templates"
 
 # Create FastAPI app
 app = FastAPI(
-    title="HotSpotchi Dashboard",
+    title="Hotspotchi Dashboard",
     description="Web interface for Tamagotchi Uni WiFi Hotspot",
     version=__version__,
 )
@@ -57,11 +57,11 @@ async def health() -> dict:
     return {"status": "ok", "version": __version__}
 
 
-def _load_server_config() -> HotSpotchiConfig:
+def _load_server_config() -> HotspotchiConfig:
     """Load config from file or use defaults."""
     if DEFAULT_CONFIG_PATH.exists():
         return load_config(DEFAULT_CONFIG_PATH)
-    return HotSpotchiConfig()
+    return HotspotchiConfig()
 
 
 def run_server(
@@ -83,7 +83,7 @@ def run_server(
     effective_host = host if host is not None else config.web_host
     effective_port = port if port is not None else config.web_port
 
-    print(f"Starting HotSpotchi Web Dashboard on http://{effective_host}:{effective_port}")
+    print(f"Starting Hotspotchi Web Dashboard on http://{effective_host}:{effective_port}")
     uvicorn.run(
         "hotspotchi.web.app:app",
         host=effective_host,

@@ -4,14 +4,14 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from hotspotchi.config import HotSpotchiConfig
+from hotspotchi.config import HotspotchiConfig
 from hotspotchi.hotspot import HotspotManager
 
 
 @pytest.fixture
 def config():
     """Create a test config."""
-    return HotSpotchiConfig(
+    return HotspotchiConfig(
         wifi_interface="wlan0",
         concurrent_mode=False,
     )
@@ -20,7 +20,7 @@ def config():
 @pytest.fixture
 def concurrent_config():
     """Create a test config with concurrent mode."""
-    return HotSpotchiConfig(
+    return HotspotchiConfig(
         wifi_interface="wlan0",
         concurrent_mode=True,
         ap_interface="uap0",
@@ -30,12 +30,12 @@ def concurrent_config():
 class TestHotspotManagerInit:
     """Tests for HotspotManager initialization."""
 
-    def test_init_with_config(self, config: HotSpotchiConfig):
+    def test_init_with_config(self, config: HotspotchiConfig):
         """Manager should initialize with config."""
         manager = HotspotManager(config)
         assert manager.config == config
 
-    def test_init_concurrent_mode(self, concurrent_config: HotSpotchiConfig):
+    def test_init_concurrent_mode(self, concurrent_config: HotspotchiConfig):
         """Manager should handle concurrent mode config."""
         manager = HotspotManager(concurrent_config)
         assert manager.config.concurrent_mode is True
@@ -45,20 +45,20 @@ class TestHotspotManagerInit:
 class TestHotspotManagerChecks:
     """Tests for HotspotManager system checks."""
 
-    def test_check_root_as_root(self, config: HotSpotchiConfig):
+    def test_check_root_as_root(self, config: HotspotchiConfig):
         """check_root should return True when running as root."""
         manager = HotspotManager(config)
         with patch("os.geteuid", return_value=0):
             assert manager.check_root() is True
 
-    def test_check_root_not_root(self, config: HotSpotchiConfig):
+    def test_check_root_not_root(self, config: HotspotchiConfig):
         """check_root should return False when not root."""
         manager = HotspotManager(config)
         with patch("os.geteuid", return_value=1000):
             assert manager.check_root() is False
 
     @patch("shutil.which")
-    def test_check_dependencies_all_present(self, mock_which: MagicMock, config: HotSpotchiConfig):
+    def test_check_dependencies_all_present(self, mock_which: MagicMock, config: HotspotchiConfig):
         """check_dependencies should return empty list when all present."""
         mock_which.return_value = "/usr/sbin/hostapd"
         manager = HotspotManager(config)
@@ -67,7 +67,7 @@ class TestHotspotManagerChecks:
 
     @patch("shutil.which")
     def test_check_dependencies_missing_hostapd(
-        self, mock_which: MagicMock, config: HotSpotchiConfig
+        self, mock_which: MagicMock, config: HotspotchiConfig
     ):
         """check_dependencies should list missing hostapd."""
         mock_which.side_effect = lambda x: None if x == "hostapd" else f"/usr/bin/{x}"
@@ -77,7 +77,7 @@ class TestHotspotManagerChecks:
 
     @patch("shutil.which")
     def test_check_dependencies_missing_dnsmasq(
-        self, mock_which: MagicMock, config: HotSpotchiConfig
+        self, mock_which: MagicMock, config: HotspotchiConfig
     ):
         """check_dependencies should list missing dnsmasq."""
         mock_which.side_effect = lambda x: None if x == "dnsmasq" else f"/usr/bin/{x}"
@@ -87,7 +87,7 @@ class TestHotspotManagerChecks:
 
     @patch("shutil.which")
     def test_check_dependencies_concurrent_mode_needs_iw(
-        self, mock_which: MagicMock, concurrent_config: HotSpotchiConfig
+        self, mock_which: MagicMock, concurrent_config: HotspotchiConfig
     ):
         """check_dependencies in concurrent mode should check for iw."""
         mock_which.side_effect = lambda x: None if x == "iw" else f"/usr/bin/{x}"
@@ -100,14 +100,14 @@ class TestHotspotManagerIsRunning:
     """Tests for is_running check."""
 
     @patch("subprocess.run")
-    def test_is_running_true(self, mock_run: MagicMock, config: HotSpotchiConfig):
+    def test_is_running_true(self, mock_run: MagicMock, config: HotspotchiConfig):
         """is_running should return True when hostapd is running."""
         mock_run.return_value = MagicMock(returncode=0)
         manager = HotspotManager(config)
         assert manager.is_running() is True
 
     @patch("subprocess.run")
-    def test_is_running_false(self, mock_run: MagicMock, config: HotSpotchiConfig):
+    def test_is_running_false(self, mock_run: MagicMock, config: HotspotchiConfig):
         """is_running should return False when hostapd is not running."""
         mock_run.return_value = MagicMock(returncode=1)
         manager = HotspotManager(config)
@@ -167,24 +167,24 @@ class TestConcurrentSupport:
 class TestHotspotManagerHelpers:
     """Tests for helper methods."""
 
-    def test_get_effective_interface_normal(self, config: HotSpotchiConfig):
+    def test_get_effective_interface_normal(self, config: HotspotchiConfig):
         """Should return wifi_interface in normal mode."""
         manager = HotspotManager(config)
         assert manager._get_effective_interface() == "wlan0"
 
-    def test_get_effective_interface_concurrent(self, concurrent_config: HotSpotchiConfig):
+    def test_get_effective_interface_concurrent(self, concurrent_config: HotspotchiConfig):
         """Should return ap_interface in concurrent mode."""
         manager = HotspotManager(concurrent_config)
         assert manager._get_effective_interface() == "uap0"
 
-    def test_is_5ghz_channel_true(self, config: HotSpotchiConfig):
+    def test_is_5ghz_channel_true(self, config: HotspotchiConfig):
         """Should return True for 5GHz channels."""
         manager = HotspotManager(config)
         assert manager._is_5ghz_channel(36) is True
         assert manager._is_5ghz_channel(40) is True
         assert manager._is_5ghz_channel(149) is True
 
-    def test_is_5ghz_channel_false(self, config: HotSpotchiConfig):
+    def test_is_5ghz_channel_false(self, config: HotspotchiConfig):
         """Should return False for 2.4GHz channels."""
         manager = HotspotManager(config)
         assert manager._is_5ghz_channel(1) is False
@@ -198,7 +198,7 @@ class TestHotspotManagerVirtualInterface:
 
     @patch("hotspotchi.hotspot.Path")
     def test_create_virtual_interface_already_exists(
-        self, mock_path: MagicMock, concurrent_config: HotSpotchiConfig
+        self, mock_path: MagicMock, concurrent_config: HotspotchiConfig
     ):
         """Should return True if interface already exists."""
         mock_path.return_value.exists.return_value = True
@@ -214,7 +214,7 @@ class TestHotspotManagerVirtualInterface:
         mock_path: MagicMock,
         mock_run: MagicMock,
         _mock_sleep: MagicMock,
-        concurrent_config: HotSpotchiConfig,
+        concurrent_config: HotspotchiConfig,
     ):
         """Should create interface if it doesn't exist."""
         mock_path.return_value.exists.return_value = False
@@ -227,7 +227,7 @@ class TestHotspotManagerVirtualInterface:
     @patch("subprocess.run")
     @patch("hotspotchi.hotspot.Path")
     def test_create_virtual_interface_failure(
-        self, mock_path: MagicMock, mock_run: MagicMock, concurrent_config: HotSpotchiConfig
+        self, mock_path: MagicMock, mock_run: MagicMock, concurrent_config: HotspotchiConfig
     ):
         """Should return False on creation failure."""
         mock_path.return_value.exists.return_value = False
@@ -239,7 +239,7 @@ class TestHotspotManagerVirtualInterface:
     @patch("subprocess.run")
     @patch("hotspotchi.hotspot.Path")
     def test_remove_virtual_interface(
-        self, mock_path: MagicMock, mock_run: MagicMock, concurrent_config: HotSpotchiConfig
+        self, mock_path: MagicMock, mock_run: MagicMock, concurrent_config: HotspotchiConfig
     ):
         """Should remove interface if it exists."""
         mock_path.return_value.exists.return_value = True
@@ -254,7 +254,7 @@ class TestHotspotManagerChannelDetection:
     """Tests for channel detection."""
 
     @patch("subprocess.run")
-    def test_get_current_channel_success(self, mock_run: MagicMock, config: HotSpotchiConfig):
+    def test_get_current_channel_success(self, mock_run: MagicMock, config: HotspotchiConfig):
         """Should parse channel from iw output."""
         mock_run.return_value = MagicMock(
             returncode=0,
@@ -265,7 +265,7 @@ class TestHotspotManagerChannelDetection:
         assert channel == 6
 
     @patch("subprocess.run")
-    def test_get_current_channel_default(self, mock_run: MagicMock, config: HotSpotchiConfig):
+    def test_get_current_channel_default(self, mock_run: MagicMock, config: HotspotchiConfig):
         """Should return default channel on failure."""
         mock_run.return_value = MagicMock(returncode=1, stdout="")
         manager = HotspotManager(config)
@@ -274,7 +274,7 @@ class TestHotspotManagerChannelDetection:
 
     @patch("subprocess.run")
     def test_get_current_channel_no_channel_info(
-        self, mock_run: MagicMock, config: HotSpotchiConfig
+        self, mock_run: MagicMock, config: HotspotchiConfig
     ):
         """Should return default if no channel in output."""
         mock_run.return_value = MagicMock(
@@ -290,7 +290,7 @@ class TestHotspotManagerMACAddress:
     """Tests for MAC address operations."""
 
     @patch("hotspotchi.hotspot.Path")
-    def test_get_current_mac_success(self, mock_path: MagicMock, config: HotSpotchiConfig):
+    def test_get_current_mac_success(self, mock_path: MagicMock, config: HotspotchiConfig):
         """Should read MAC from sysfs."""
         mock_path.return_value.read_text.return_value = "aa:bb:cc:dd:ee:ff\n"
         manager = HotspotManager(config)
@@ -298,7 +298,7 @@ class TestHotspotManagerMACAddress:
         assert mac == "aa:bb:cc:dd:ee:ff"
 
     @patch("hotspotchi.hotspot.Path")
-    def test_get_current_mac_not_found(self, mock_path: MagicMock, config: HotSpotchiConfig):
+    def test_get_current_mac_not_found(self, mock_path: MagicMock, config: HotspotchiConfig):
         """Should return None if file not found."""
         mock_path.return_value.read_text.side_effect = FileNotFoundError()
         manager = HotspotManager(config)
@@ -307,7 +307,7 @@ class TestHotspotManagerMACAddress:
 
     @patch("hotspotchi.hotspot.Path")
     def test_get_current_mac_permission_denied(
-        self, mock_path: MagicMock, config: HotSpotchiConfig
+        self, mock_path: MagicMock, config: HotspotchiConfig
     ):
         """Should return None if permission denied."""
         mock_path.return_value.read_text.side_effect = PermissionError()
@@ -318,7 +318,7 @@ class TestHotspotManagerMACAddress:
     @patch("hotspotchi.hotspot.time.sleep")
     @patch("subprocess.run")
     def test_set_mac_address_success(
-        self, mock_run: MagicMock, _mock_sleep: MagicMock, config: HotSpotchiConfig
+        self, mock_run: MagicMock, _mock_sleep: MagicMock, config: HotspotchiConfig
     ):
         """Should set MAC address successfully."""
         mock_run.return_value = MagicMock(returncode=0)
@@ -329,7 +329,7 @@ class TestHotspotManagerMACAddress:
     @patch("hotspotchi.hotspot.time.sleep")
     @patch("subprocess.run")
     def test_set_mac_address_failure(
-        self, mock_run: MagicMock, _mock_sleep: MagicMock, config: HotSpotchiConfig
+        self, mock_run: MagicMock, _mock_sleep: MagicMock, config: HotspotchiConfig
     ):
         """Should return False on failure."""
         mock_run.side_effect = [
@@ -344,7 +344,7 @@ class TestHotspotManagerMACAddress:
 class TestHotspotManagerPassword:
     """Tests for password handling."""
 
-    def test_get_effective_password_daily(self, config: HotSpotchiConfig):
+    def test_get_effective_password_daily(self, config: HotspotchiConfig):
         """Should generate daily password when None."""
         # Default config has wifi_password=None
         manager = HotspotManager(config)
@@ -354,14 +354,14 @@ class TestHotspotManagerPassword:
 
     def test_get_effective_password_fixed(self):
         """Should return fixed password when set."""
-        config = HotSpotchiConfig(wifi_password="mypassword123")
+        config = HotspotchiConfig(wifi_password="mypassword123")
         manager = HotspotManager(config)
         password = manager._get_effective_password()
         assert password == "mypassword123"
 
     def test_get_effective_password_open(self):
         """Should return None for open network."""
-        config = HotSpotchiConfig(wifi_password="")
+        config = HotspotchiConfig(wifi_password="")
         manager = HotspotManager(config)
         password = manager._get_effective_password()
         assert password is None
@@ -372,7 +372,7 @@ class TestHotspotManagerConfigGeneration:
 
     @patch("subprocess.run")
     def test_create_hostapd_config_with_password(
-        self, mock_run: MagicMock, config: HotSpotchiConfig
+        self, mock_run: MagicMock, config: HotspotchiConfig
     ):
         """Should create hostapd config with WPA2."""
         mock_run.return_value = MagicMock(returncode=1, stdout="")  # No channel info
@@ -392,7 +392,7 @@ class TestHotspotManagerConfigGeneration:
     def test_create_hostapd_config_open_network(self, mock_run: MagicMock):
         """Should create hostapd config without WPA for open network."""
         mock_run.return_value = MagicMock(returncode=1, stdout="")
-        config = HotSpotchiConfig(wifi_password="")
+        config = HotspotchiConfig(wifi_password="")
         manager = HotspotManager(config)
         config_path = manager._create_hostapd_config("OpenSSID")
 
@@ -406,7 +406,7 @@ class TestHotspotManagerConfigGeneration:
     def test_create_hostapd_config_5ghz(self, mock_run: MagicMock):
         """Should use hw_mode=a for 5GHz channels."""
         mock_run.return_value = MagicMock(returncode=0, stdout="channel 36 (5180 MHz)")
-        config = HotSpotchiConfig(concurrent_mode=True)
+        config = HotspotchiConfig(concurrent_mode=True)
         manager = HotspotManager(config)
         config_path = manager._create_hostapd_config("5GHz_SSID")
 
@@ -416,7 +416,7 @@ class TestHotspotManagerConfigGeneration:
 
         config_path.unlink()
 
-    def test_create_dnsmasq_config(self, config: HotSpotchiConfig):
+    def test_create_dnsmasq_config(self, config: HotspotchiConfig):
         """Should create dnsmasq config."""
         manager = HotspotManager(config)
         config_path = manager._create_dnsmasq_config()
@@ -432,7 +432,7 @@ class TestHotspotManagerServiceControl:
     """Tests for service control methods."""
 
     @patch("subprocess.run")
-    def test_stop_conflicting_services(self, mock_run: MagicMock, config: HotSpotchiConfig):
+    def test_stop_conflicting_services(self, mock_run: MagicMock, config: HotspotchiConfig):
         """Should stop conflicting services."""
         mock_run.return_value = MagicMock(returncode=0)
         manager = HotspotManager(config)
@@ -441,7 +441,7 @@ class TestHotspotManagerServiceControl:
         assert mock_run.call_count >= 4
 
     @patch("subprocess.run")
-    def test_unblock_wifi(self, mock_run: MagicMock, config: HotSpotchiConfig):
+    def test_unblock_wifi(self, mock_run: MagicMock, config: HotspotchiConfig):
         """Should unblock WiFi."""
         mock_run.return_value = MagicMock(returncode=0)
         manager = HotspotManager(config)
@@ -451,7 +451,7 @@ class TestHotspotManagerServiceControl:
         assert "rfkill" in call_args
 
     @patch("subprocess.run")
-    def test_configure_interface(self, mock_run: MagicMock, config: HotSpotchiConfig):
+    def test_configure_interface(self, mock_run: MagicMock, config: HotspotchiConfig):
         """Should configure IP address."""
         mock_run.return_value = MagicMock(returncode=0)
         manager = HotspotManager(config)
@@ -464,7 +464,7 @@ class TestHotspotManagerStartStop:
     """Tests for start/stop with mocked dependencies."""
 
     @patch("os.geteuid")
-    def test_start_requires_root(self, mock_geteuid: MagicMock, config: HotSpotchiConfig):
+    def test_start_requires_root(self, mock_geteuid: MagicMock, config: HotspotchiConfig):
         """Should raise error if not root."""
         mock_geteuid.return_value = 1000  # Not root
         manager = HotspotManager(config)
@@ -474,7 +474,7 @@ class TestHotspotManagerStartStop:
     @patch("shutil.which")
     @patch("os.geteuid")
     def test_start_checks_dependencies(
-        self, mock_geteuid: MagicMock, mock_which: MagicMock, config: HotSpotchiConfig
+        self, mock_geteuid: MagicMock, mock_which: MagicMock, config: HotspotchiConfig
     ):
         """Should raise error if dependencies missing."""
         mock_geteuid.return_value = 0  # Root
@@ -484,7 +484,7 @@ class TestHotspotManagerStartStop:
             manager.start()
 
     @patch("subprocess.run")
-    def test_stop_cleans_up(self, mock_run: MagicMock, config: HotSpotchiConfig):
+    def test_stop_cleans_up(self, mock_run: MagicMock, config: HotspotchiConfig):
         """Should clean up processes and files."""
         mock_run.return_value = MagicMock(returncode=0)
         manager = HotspotManager(config)
@@ -505,7 +505,7 @@ class TestHotspotManagerStartStop:
         dnsmasq_mock.terminate.assert_called_once()
 
     @patch("subprocess.run")
-    def test_stop_restores_mac(self, mock_run: MagicMock, config: HotSpotchiConfig):
+    def test_stop_restores_mac(self, mock_run: MagicMock, config: HotspotchiConfig):
         """Should restore original MAC address."""
         mock_run.return_value = MagicMock(returncode=0)
         manager = HotspotManager(config)
@@ -524,7 +524,7 @@ class TestHotspotManagerStartStop:
         mock_run.return_value = MagicMock(returncode=0)
         mock_path.return_value.exists.return_value = True
 
-        config = HotSpotchiConfig(concurrent_mode=True, ap_interface="uap0")
+        config = HotspotchiConfig(concurrent_mode=True, ap_interface="uap0")
         manager = HotspotManager(config)
         manager._virtual_interface_created = True
 
@@ -535,7 +535,7 @@ class TestHotspotManagerStartStop:
         assert "uap0" in calls_str
 
     @patch("subprocess.run")
-    def test_stop_handles_hostapd_timeout(self, mock_run: MagicMock, config: HotSpotchiConfig):
+    def test_stop_handles_hostapd_timeout(self, mock_run: MagicMock, config: HotspotchiConfig):
         """Should kill process if terminate times out."""
         import subprocess
 
@@ -553,7 +553,7 @@ class TestHotspotManagerStartStop:
         mock_process.kill.assert_called_once()
 
     @patch("subprocess.run")
-    def test_stop_handles_dnsmasq_timeout(self, mock_run: MagicMock, config: HotSpotchiConfig):
+    def test_stop_handles_dnsmasq_timeout(self, mock_run: MagicMock, config: HotspotchiConfig):
         """Should kill dnsmasq if terminate times out."""
         import subprocess
 
@@ -571,7 +571,7 @@ class TestHotspotManagerStartStop:
         mock_process.kill.assert_called_once()
 
     @patch("subprocess.run")
-    def test_stop_cleans_config_files(self, mock_run: MagicMock, config: HotSpotchiConfig):
+    def test_stop_cleans_config_files(self, mock_run: MagicMock, config: HotspotchiConfig):
         """Should remove config files if they exist."""
         import tempfile
         from pathlib import Path
@@ -598,7 +598,7 @@ class TestHotspotManagerRestart:
     """Tests for restart method."""
 
     @patch("subprocess.run")
-    def test_restart_stops_and_starts(self, mock_run: MagicMock, config: HotSpotchiConfig):
+    def test_restart_stops_and_starts(self, mock_run: MagicMock, config: HotspotchiConfig):
         """Should stop and start when running."""
         mock_run.return_value = MagicMock(returncode=0)
         manager = HotspotManager(config)
@@ -615,12 +615,12 @@ class TestHotspotManagerRestart:
             mock_start.assert_called_once()
 
     @patch("subprocess.run")
-    def test_restart_with_new_config(self, mock_run: MagicMock, config: HotSpotchiConfig):
+    def test_restart_with_new_config(self, mock_run: MagicMock, config: HotspotchiConfig):
         """Should update config on restart."""
         mock_run.return_value = MagicMock(returncode=0)
         manager = HotspotManager(config)
 
-        new_config = HotSpotchiConfig(wifi_interface="wlan1")
+        new_config = HotspotchiConfig(wifi_interface="wlan1")
 
         with (
             patch.object(manager, "is_running", return_value=False),
@@ -632,7 +632,7 @@ class TestHotspotManagerRestart:
             mock_start.assert_called_once()
 
     @patch("subprocess.run")
-    def test_restart_not_running_no_new_config(self, mock_run: MagicMock, config: HotSpotchiConfig):
+    def test_restart_not_running_no_new_config(self, mock_run: MagicMock, config: HotspotchiConfig):
         """Should return current state if not running and no new config."""
         mock_run.return_value = MagicMock(returncode=0)
         manager = HotspotManager(config)
@@ -650,10 +650,10 @@ class TestHotspotManagerRestart:
 class TestHotspotManagerUpdateConfig:
     """Tests for update_config method."""
 
-    def test_update_config(self, config: HotSpotchiConfig):
+    def test_update_config(self, config: HotspotchiConfig):
         """Should update config without restarting."""
         manager = HotspotManager(config)
-        new_config = HotSpotchiConfig(wifi_interface="wlan1", default_ssid="NewSSID")
+        new_config = HotspotchiConfig(wifi_interface="wlan1", default_ssid="NewSSID")
 
         manager.update_config(new_config)
 
@@ -666,7 +666,7 @@ class TestHotspotManagerGetState:
     """Tests for get_state method."""
 
     @patch("subprocess.run")
-    def test_get_state_not_running(self, mock_run: MagicMock, config: HotSpotchiConfig):
+    def test_get_state_not_running(self, mock_run: MagicMock, config: HotspotchiConfig):
         """Should return empty state when not running."""
         mock_run.return_value = MagicMock(returncode=1)  # pgrep returns 1 = not found
         manager = HotspotManager(config)
@@ -680,7 +680,7 @@ class TestHotspotManagerGetState:
     @patch("subprocess.run")
     @patch("hotspotchi.hotspot.select_combined")
     def test_get_state_running_with_mac_character(
-        self, mock_select: MagicMock, mock_run: MagicMock, config: HotSpotchiConfig
+        self, mock_select: MagicMock, mock_run: MagicMock, config: HotspotchiConfig
     ):
         """Should return state with character info when running."""
         from hotspotchi.characters import CHARACTERS
@@ -703,7 +703,7 @@ class TestHotspotManagerGetState:
     @patch("subprocess.run")
     @patch("hotspotchi.hotspot.select_combined")
     def test_get_state_running_with_special_ssid(
-        self, mock_select: MagicMock, mock_run: MagicMock, config: HotSpotchiConfig
+        self, mock_select: MagicMock, mock_run: MagicMock, config: HotspotchiConfig
     ):
         """Should return state with special SSID info when running."""
         from hotspotchi.characters import SPECIAL_SSIDS
@@ -726,7 +726,7 @@ class TestHotspotManagerGetState:
     @patch("subprocess.run")
     @patch("hotspotchi.hotspot.select_combined")
     def test_get_state_running_disabled_mode(
-        self, mock_select: MagicMock, mock_run: MagicMock, config: HotSpotchiConfig
+        self, mock_select: MagicMock, mock_run: MagicMock, config: HotspotchiConfig
     ):
         """Should return state with no character when disabled."""
         from hotspotchi.selection import SelectionResult

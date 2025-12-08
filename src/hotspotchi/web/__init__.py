@@ -1,5 +1,5 @@
 """
-HotSpotchi Web Dashboard.
+Hotspotchi Web Dashboard.
 
 Provides a web interface for monitoring and controlling the hotspot.
 """

@@ -1,6 +1,6 @@
-# HotSpotchi
+# Hotspotchi
 
-![HotSpotchi](misc/banner.png)
+![Hotspotchi](misc/banner.png)
 
 [![CI](https://github.com/mensfeld/hotspotchi/actions/workflows/ci.yml/badge.svg)](https://github.com/mensfeld/hotspotchi/actions/workflows/ci.yml)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
@@ -8,13 +8,13 @@
 
 Create WiFi access points with custom MAC addresses and SSIDs for meeting characters in Tamagotchi Uni's **Tama Search** feature.
 
-## Why HotSpotchi?
+## Why Hotspotchi?
 
 The Tamagotchi Uni's **Tama Search** feature lets you meet special characters by detecting nearby WiFi networks. The character you encounter depends on the last two bytes of the WiFi access point's MAC address, or in some cases, specific SSIDs for event-exclusive characters.
 
 The problem? You'd need to physically visit different locations with different WiFi networks to collect all characters - or wait for special real-world events that may never happen in your area.
 
-**HotSpotchi solves this** by turning your Raspberry Pi into a WiFi hotspot that can spoof any MAC address or SSID, letting you:
+**Hotspotchi solves this** by turning your Raspberry Pi into a WiFi hotspot that can spoof any MAC address or SSID, letting you:
 
 - Meet all ~90 characters from home without traveling
 - Access event-exclusive characters (like Sanrio collaborations) that require specific SSIDs
@@ -23,7 +23,7 @@ The problem? You'd need to physically visit different locations with different W
 
 Perfect for completionists, rural players without access to many WiFi networks, or anyone who just wants to meet their favorite Tamagotchi characters without leaving the house.
 
-![HotSpotchi Web Dashboard](misc/ui.png)
+![Hotspotchi Web Dashboard](misc/ui.png)
 
 ## Features
 
@@ -63,7 +63,7 @@ The installer will set up everything automatically, including systemd services f
 
 ## Security
 
-**HotSpotchi requires root privileges** to manage network interfaces and system services.
+**Hotspotchi requires root privileges** to manage network interfaces and system services.
 
 The WiFi network is secured by default:
 - A random 16-character password is generated daily
@@ -143,7 +143,7 @@ concurrent_mode: false
 
 # SSID mode: normal, special, or custom
 ssid_mode: normal
-default_ssid: HotSpotchi
+default_ssid: Hotspotchi
 
 # MAC mode: daily_random, random, cycle, fixed, or disabled
 mac_mode: daily_random
@@ -166,14 +166,14 @@ web_port: 8080
 
 ### With Tamagotchi Uni
 
-1. Start the HotSpotchi hotspot on your Raspberry Pi
+1. Start the Hotspotchi hotspot on your Raspberry Pi
 2. On your Tamagotchi Uni, go to **Tama Search**
 3. Select the network when it appears
 4. Meet the character determined by the current MAC/SSID!
 
 ### MAC-Based Characters
 
-Characters are determined by the last two bytes of the MAC address. HotSpotchi uses the format:
+Characters are determined by the last two bytes of the MAC address. Hotspotchi uses the format:
 
 ```
 02:7A:6D:A0:XX:YY
@@ -186,7 +186,7 @@ Where:
 
 ### Special SSIDs
 
-Some characters are triggered by specific WiFi network names (SSIDs) that were originally only available at special events in Japan. HotSpotchi includes 21 known special SSIDs:
+Some characters are triggered by specific WiFi network names (SSIDs) that were originally only available at special events in Japan. Hotspotchi includes 21 known special SSIDs:
 
 - **Angel & Devil** - World Tamagotchi Tour
 - **Makiko** - Bandai Cross stores
@@ -208,7 +208,7 @@ Set your Tamagotchi's date to meet seasonal characters:
 
 ### Raspberry Pi becomes unreachable after starting hotspot
 
-**This is expected behavior.** When HotSpotchi starts the WiFi hotspot, it takes over the `wlan0` interface. If your Pi was connected to your home WiFi via `wlan0`, it will disconnect.
+**This is expected behavior.** When Hotspotchi starts the WiFi hotspot, it takes over the `wlan0` interface. If your Pi was connected to your home WiFi via `wlan0`, it will disconnect.
 
 **Solutions:**
 

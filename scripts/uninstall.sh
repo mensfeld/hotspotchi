@@ -1,8 +1,8 @@
 #!/bin/bash
 #
-# HotSpotchi Uninstallation Script
+# Hotspotchi Uninstallation Script
 #
-# This script removes HotSpotchi and all associated files.
+# This script removes Hotspotchi and all associated files.
 #
 # Usage: sudo bash uninstall.sh
 #
@@ -134,7 +134,7 @@ restore_wifi() {
 print_completion() {
     echo ""
     print_msg "$GREEN" "============================================"
-    print_msg "$GREEN" "  HotSpotchi uninstalled successfully!"
+    print_msg "$GREEN" "  Hotspotchi uninstalled successfully!"
     print_msg "$GREEN" "============================================"
     echo ""
     echo "Note: hostapd and dnsmasq packages were NOT removed."
@@ -146,12 +146,12 @@ print_completion() {
 main() {
     echo ""
     print_msg "$GREEN" "============================================"
-    print_msg "$GREEN" "  HotSpotchi Uninstaller"
+    print_msg "$GREEN" "  Hotspotchi Uninstaller"
     print_msg "$GREEN" "============================================"
 
     check_root
 
-    read -p "Are you sure you want to uninstall HotSpotchi? [y/N] " -n 1 -r
+    read -p "Are you sure you want to uninstall Hotspotchi? [y/N] " -n 1 -r
     echo
     if [[ ! $REPLY =~ ^[Yy]$ ]]; then
         echo "Uninstallation cancelled."

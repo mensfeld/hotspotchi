@@ -30,7 +30,7 @@ class TestMainCommand:
         """Main --help should show available commands."""
         result = runner.invoke(main, ["--help"])
         assert result.exit_code == 0
-        assert "HotSpotchi" in result.output
+        assert "Hotspotchi" in result.output
         assert "start" in result.output
         assert "status" in result.output
 
@@ -38,7 +38,7 @@ class TestMainCommand:
         """Main --version should show version."""
         result = runner.invoke(main, ["--version"])
         assert result.exit_code == 0
-        assert "HotSpotchi" in result.output
+        assert "Hotspotchi" in result.output
 
 
 class TestListCharactersCommand:
@@ -95,7 +95,7 @@ class TestStatusCommand:
         """status should show current character selection."""
         result = runner.invoke(status)
         assert result.exit_code == 0
-        assert "HotSpotchi Status" in result.output
+        assert "Hotspotchi Status" in result.output
         assert "MAC Mode:" in result.output
         assert "SSID Mode:" in result.output
 
@@ -109,7 +109,7 @@ class TestStatusCommand:
         """status --character-index should use specific character."""
         result = runner.invoke(status, ["--character-index", "5"])
         assert result.exit_code == 0
-        assert "HotSpotchi Status" in result.output
+        assert "Hotspotchi Status" in result.output
 
     def test_status_daily_random_shows_countdown(self, runner: CliRunner):
         """status in daily_random mode should show countdown."""
@@ -247,7 +247,7 @@ class TestCheckCommand:
             result = runner.invoke(check)
 
         assert result.exit_code == 0
-        assert "HotSpotchi System Check" in result.output
+        assert "Hotspotchi System Check" in result.output
         assert "[OK] Running as root" in result.output
 
     @patch("hotspotchi.cli.HotspotManager")

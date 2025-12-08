@@ -1,8 +1,8 @@
 #!/bin/bash
 #
-# HotSpotchi Installation Script for Raspberry Pi
+# Hotspotchi Installation Script for Raspberry Pi
 #
-# This script installs HotSpotchi and sets up systemd services
+# This script installs Hotspotchi and sets up systemd services
 # for automatic startup.
 #
 # Usage: sudo bash install.sh
@@ -56,7 +56,7 @@ show_warning() {
     print_msg "$YELLOW" "  ⚠️  IMPORTANT WARNING"
     print_msg "$YELLOW" "============================================"
     echo ""
-    echo "HotSpotchi creates a WiFi hotspot that TAKES OVER your"
+    echo "Hotspotchi creates a WiFi hotspot that TAKES OVER your"
     echo "WiFi interface (wlan0). This means:"
     echo ""
     echo "  • Your Pi will DISCONNECT from your home WiFi"
@@ -170,7 +170,7 @@ create_directories() {
 
 # Install Python package
 install_python_package() {
-    print_step "Installing HotSpotchi Python package..."
+    print_step "Installing Hotspotchi Python package..."
 
     # Create virtual environment
     python3 -m venv "$INSTALL_DIR/venv"
@@ -190,7 +190,7 @@ install_python_package() {
 
     deactivate
 
-    echo "  HotSpotchi installed in virtual environment"
+    echo "  Hotspotchi installed in virtual environment"
 }
 
 # Create wrapper scripts
@@ -223,7 +223,7 @@ create_default_config() {
 
     if [[ ! -f "$CONFIG_DIR/config.yaml" ]]; then
         cat > "$CONFIG_DIR/config.yaml" << EOF
-# HotSpotchi Configuration
+# Hotspotchi Configuration
 # See documentation for all options
 
 # WiFi interface (usually wlan0 on Raspberry Pi)
@@ -235,7 +235,7 @@ concurrent_mode: ${ENABLE_CONCURRENT:-false}
 
 # SSID mode: normal, special, or custom
 ssid_mode: normal
-default_ssid: HotSpotchi
+default_ssid: Hotspotchi
 
 # MAC mode: daily_random, random, cycle, fixed, or disabled
 mac_mode: daily_random
@@ -271,7 +271,7 @@ create_hotspot_service() {
 
     cat > "$SYSTEMD_DIR/hotspotchi.service" << EOF
 [Unit]
-Description=HotSpotchi WiFi Hotspot
+Description=Hotspotchi WiFi Hotspot
 After=network.target
 
 [Service]
@@ -296,7 +296,7 @@ create_web_service() {
 
     cat > "$SYSTEMD_DIR/hotspotchi-web.service" << EOF
 [Unit]
-Description=HotSpotchi Web Dashboard
+Description=Hotspotchi Web Dashboard
 After=network.target
 
 [Service]
@@ -334,7 +334,7 @@ enable_services() {
 print_completion() {
     echo ""
     print_msg "$GREEN" "============================================"
-    print_msg "$GREEN" "  HotSpotchi installed successfully!"
+    print_msg "$GREEN" "  Hotspotchi installed successfully!"
     print_msg "$GREEN" "============================================"
     echo ""
 
@@ -381,7 +381,7 @@ print_completion() {
 main() {
     echo ""
     print_msg "$GREEN" "============================================"
-    print_msg "$GREEN" "  HotSpotchi Installer"
+    print_msg "$GREEN" "  Hotspotchi Installer"
     print_msg "$GREEN" "============================================"
 
     check_root

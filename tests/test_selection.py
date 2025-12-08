@@ -4,7 +4,7 @@ from datetime import datetime
 from pathlib import Path
 
 from hotspotchi.characters import CHARACTERS, SPECIAL_SSIDS
-from hotspotchi.config import HotSpotchiConfig, MacMode, SsidMode
+from hotspotchi.config import HotspotchiConfig, MacMode, SsidMode
 from hotspotchi.selection import (
     SelectionResult,
     generate_daily_password,
@@ -106,14 +106,14 @@ class TestCycleIndex:
 class TestSelectCharacter:
     """Tests for character selection across all modes."""
 
-    def test_daily_random_same_character_same_day(self, daily_random_config: HotSpotchiConfig):
+    def test_daily_random_same_character_same_day(self, daily_random_config: HotspotchiConfig):
         """Daily random mode should return same character all day."""
         fixed_date = datetime(2024, 6, 15)
         char1 = select_character(daily_random_config, current_date=fixed_date)
         char2 = select_character(daily_random_config, current_date=fixed_date)
         assert char1 == char2
 
-    def test_daily_random_different_days(self, daily_random_config: HotSpotchiConfig):
+    def test_daily_random_different_days(self, daily_random_config: HotspotchiConfig):
         """Daily random mode should likely differ between days."""
         # Note: Theoretically could be same by chance, but very unlikely
         date1 = datetime(2024, 6, 15)
@@ -127,25 +127,25 @@ class TestSelectCharacter:
 
     def test_random_mode_returns_character(self):
         """Random mode should return a valid character."""
-        config = HotSpotchiConfig(mac_mode=MacMode.RANDOM)
+        config = HotspotchiConfig(mac_mode=MacMode.RANDOM)
         char = select_character(config)
         assert char in CHARACTERS
 
     def test_random_mode_varies(self):
         """Random mode should produce variety over many calls."""
-        config = HotSpotchiConfig(mac_mode=MacMode.RANDOM)
+        config = HotspotchiConfig(mac_mode=MacMode.RANDOM)
         chars = {select_character(config) for _ in range(20)}
         # Should have at least some variety
         assert len(chars) > 1
 
-    def test_fixed_mode_correct_index(self, fixed_config: HotSpotchiConfig):
+    def test_fixed_mode_correct_index(self, fixed_config: HotspotchiConfig):
         """Fixed mode should return character at specified index."""
         char = select_character(fixed_config)
         assert char == CHARACTERS[5]
 
     def test_fixed_mode_index_bounds_high(self):
         """Fixed mode should clamp to last character for too-high index."""
-        config = HotSpotchiConfig(
+        config = HotspotchiConfig(
             mac_mode=MacMode.FIXED,
             fixed_character_index=9999,
         )
@@ -154,7 +154,7 @@ class TestSelectCharacter:
 
     def test_fixed_mode_index_zero(self):
         """Fixed mode with index 0 should return first character."""
-        config = HotSpotchiConfig(
+        config = HotspotchiConfig(
             mac_mode=MacMode.FIXED,
             fixed_character_index=0,
         )
@@ -163,11 +163,11 @@ class TestSelectCharacter:
 
     def test_disabled_returns_none(self):
         """Disabled mode should return None."""
-        config = HotSpotchiConfig(mac_mode=MacMode.DISABLED)
+        config = HotspotchiConfig(mac_mode=MacMode.DISABLED)
         char = select_character(config)
         assert char is None
 
-    def test_cycle_mode(self, cycle_config: HotSpotchiConfig):
+    def test_cycle_mode(self, cycle_config: HotspotchiConfig):
         """Cycle mode should progress through characters."""
         char1 = select_character(cycle_config)
         char2 = select_character(cycle_config)
@@ -177,7 +177,7 @@ class TestSelectCharacter:
         assert char2 == CHARACTERS[1]
         assert char3 == CHARACTERS[2]
 
-    def test_empty_characters_returns_none(self, daily_random_config: HotSpotchiConfig):
+    def test_empty_characters_returns_none(self, daily_random_config: HotspotchiConfig):
         """Should return None if no characters available."""
         char = select_character(daily_random_config, characters=())
         assert char is None
@@ -186,12 +186,12 @@ class TestSelectCharacter:
 class TestGetNextCharacter:
     """Tests for next character preview."""
 
-    def test_returns_none_for_non_cycle_mode(self, daily_random_config: HotSpotchiConfig):
+    def test_returns_none_for_non_cycle_mode(self, daily_random_config: HotspotchiConfig):
         """Should return None for non-cycle modes."""
         char = get_next_character(daily_random_config)
         assert char is None
 
-    def test_returns_character_for_cycle_mode(self, cycle_config: HotSpotchiConfig):
+    def test_returns_character_for_cycle_mode(self, cycle_config: HotspotchiConfig):
         """Should return next character for cycle mode."""
         char = get_next_character(cycle_config)
         assert char is not None
@@ -201,17 +201,17 @@ class TestGetNextCharacter:
 class TestGetUpcomingCharacters:
     """Tests for upcoming characters list."""
 
-    def test_returns_empty_for_non_cycle_mode(self, daily_random_config: HotSpotchiConfig):
+    def test_returns_empty_for_non_cycle_mode(self, daily_random_config: HotspotchiConfig):
         """Should return empty list for non-cycle modes."""
         upcoming = get_upcoming_characters(daily_random_config)
         assert upcoming == []
 
-    def test_returns_correct_count(self, cycle_config: HotSpotchiConfig):
+    def test_returns_correct_count(self, cycle_config: HotspotchiConfig):
         """Should return requested number of characters."""
         upcoming = get_upcoming_characters(cycle_config, count=5)
         assert len(upcoming) == 5
 
-    def test_returns_characters_in_order(self, cycle_config: HotSpotchiConfig):
+    def test_returns_characters_in_order(self, cycle_config: HotspotchiConfig):
         """Characters should be in correct order."""
         upcoming = get_upcoming_characters(cycle_config, count=3)
         # First character should be current (index 0)
@@ -296,13 +296,13 @@ class TestSelectCombined:
 
     def test_returns_selection_result(self):
         """Should always return a SelectionResult object."""
-        config = HotSpotchiConfig(mac_mode=MacMode.RANDOM)
+        config = HotspotchiConfig(mac_mode=MacMode.RANDOM)
         result = select_combined(config)
         assert isinstance(result, SelectionResult)
 
     def test_special_ssid_mode_returns_special_ssid(self):
         """Special SSID mode should return a special SSID, not a character."""
-        config = HotSpotchiConfig(
+        config = HotspotchiConfig(
             mac_mode=MacMode.FIXED,
             ssid_mode=SsidMode.SPECIAL,
             special_ssid_index=0,
@@ -317,7 +317,7 @@ class TestSelectCombined:
         """Special SSID mode should use the configured index."""
         if len(SPECIAL_SSIDS) < 3:
             return  # Skip if not enough special SSIDs
-        config = HotSpotchiConfig(
+        config = HotspotchiConfig(
             mac_mode=MacMode.FIXED,
             ssid_mode=SsidMode.SPECIAL,
             special_ssid_index=2,
@@ -327,7 +327,7 @@ class TestSelectCombined:
 
     def test_special_ssid_mode_clamps_high_index(self):
         """Special SSID mode should clamp too-high index to last SSID."""
-        config = HotSpotchiConfig(
+        config = HotspotchiConfig(
             mac_mode=MacMode.FIXED,
             ssid_mode=SsidMode.SPECIAL,
             special_ssid_index=9999,
@@ -337,7 +337,7 @@ class TestSelectCombined:
 
     def test_fixed_mode_returns_character(self):
         """Fixed mode (without special SSID mode) should return a character."""
-        config = HotSpotchiConfig(
+        config = HotspotchiConfig(
             mac_mode=MacMode.FIXED,
             ssid_mode=SsidMode.NORMAL,
             fixed_character_index=5,
@@ -350,7 +350,7 @@ class TestSelectCombined:
 
     def test_disabled_mode_returns_empty_result(self):
         """Disabled mode should return an empty SelectionResult."""
-        config = HotSpotchiConfig(mac_mode=MacMode.DISABLED)
+        config = HotspotchiConfig(mac_mode=MacMode.DISABLED)
         result = select_combined(config)
         assert result.character is None
         assert result.special_ssid is None
@@ -358,14 +358,14 @@ class TestSelectCombined:
 
     def test_random_mode_returns_character(self):
         """Random mode should return a character from the pool."""
-        config = HotSpotchiConfig(mac_mode=MacMode.RANDOM, include_special_ssids=False)
+        config = HotspotchiConfig(mac_mode=MacMode.RANDOM, include_special_ssids=False)
         result = select_combined(config)
         assert result.character is not None
         assert result.character in CHARACTERS
 
     def test_daily_random_same_day_same_result(self):
         """Daily random should return same selection for same day."""
-        config = HotSpotchiConfig(mac_mode=MacMode.DAILY_RANDOM, include_special_ssids=False)
+        config = HotspotchiConfig(mac_mode=MacMode.DAILY_RANDOM, include_special_ssids=False)
         fixed_date = datetime(2024, 6, 15)
         result1 = select_combined(config, current_date=fixed_date)
         result2 = select_combined(config, current_date=fixed_date)
@@ -374,7 +374,7 @@ class TestSelectCombined:
     def test_cycle_mode_with_temp_file(self, temp_dir: Path):
         """Cycle mode should progress through selections."""
         cycle_file = temp_dir / "cycle.txt"
-        config = HotSpotchiConfig(
+        config = HotspotchiConfig(
             mac_mode=MacMode.CYCLE,
             cycle_file=cycle_file,
             include_special_ssids=False,
@@ -387,7 +387,7 @@ class TestSelectCombined:
         """With include_special_ssids, pool should include both characters and SSIDs."""
         # Use cycle mode to deterministically hit different items
         cycle_file = temp_dir / "cycle.txt"
-        config = HotSpotchiConfig(
+        config = HotspotchiConfig(
             mac_mode=MacMode.CYCLE,
             cycle_file=cycle_file,
             include_special_ssids=True,
@@ -404,7 +404,7 @@ class TestSelectCombined:
 
     def test_selection_result_name_property(self):
         """SelectionResult.name should work for both types."""
-        config_char = HotSpotchiConfig(
+        config_char = HotspotchiConfig(
             mac_mode=MacMode.FIXED,
             ssid_mode=SsidMode.NORMAL,
             fixed_character_index=0,
@@ -412,7 +412,7 @@ class TestSelectCombined:
         result_char = select_combined(config_char)
         assert result_char.name == CHARACTERS[0].name
 
-        config_ssid = HotSpotchiConfig(
+        config_ssid = HotspotchiConfig(
             mac_mode=MacMode.FIXED,
             ssid_mode=SsidMode.SPECIAL,
             special_ssid_index=0,
@@ -422,7 +422,7 @@ class TestSelectCombined:
 
     def test_selection_result_ssid_property(self):
         """SelectionResult.ssid should return SSID for special SSID selections."""
-        config = HotSpotchiConfig(
+        config = HotspotchiConfig(
             mac_mode=MacMode.FIXED,
             ssid_mode=SsidMode.SPECIAL,
             special_ssid_index=0,
@@ -431,7 +431,7 @@ class TestSelectCombined:
         assert result.ssid == SPECIAL_SSIDS[0].ssid
 
         # Regular character should return None for ssid
-        config_char = HotSpotchiConfig(
+        config_char = HotspotchiConfig(
             mac_mode=MacMode.FIXED,
             ssid_mode=SsidMode.NORMAL,
             fixed_character_index=0,

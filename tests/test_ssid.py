@@ -1,7 +1,7 @@
 """Tests for SSID resolution logic."""
 
 from hotspotchi.characters import SPECIAL_SSIDS
-from hotspotchi.config import HotSpotchiConfig, SsidMode
+from hotspotchi.config import HotspotchiConfig, SsidMode
 from hotspotchi.ssid import (
     find_ssid_by_character,
     find_ssid_by_ssid_string,
@@ -16,19 +16,19 @@ from hotspotchi.ssid import (
 class TestResolveSsid:
     """Tests for SSID resolution."""
 
-    def test_normal_mode_default_ssid(self, default_config: HotSpotchiConfig):
+    def test_normal_mode_default_ssid(self, default_config: HotspotchiConfig):
         """Normal mode should return default SSID."""
         ssid, char = resolve_ssid(default_config)
-        assert ssid == "HotSpotchi"
+        assert ssid == "Hotspotchi"
         assert char is None
 
-    def test_custom_mode(self, custom_ssid_config: HotSpotchiConfig):
+    def test_custom_mode(self, custom_ssid_config: HotspotchiConfig):
         """Custom mode should return custom SSID."""
         ssid, char = resolve_ssid(custom_ssid_config)
         assert ssid == "MyCustomNetwork"
         assert char is None
 
-    def test_special_mode(self, special_ssid_config: HotSpotchiConfig):
+    def test_special_mode(self, special_ssid_config: HotspotchiConfig):
         """Special mode should return special SSID and character."""
         ssid, char = resolve_ssid(special_ssid_config)
         # First special SSID is Angel & Devil
@@ -37,7 +37,7 @@ class TestResolveSsid:
 
     def test_special_mode_index_bounds(self):
         """Special mode should clamp to valid index."""
-        config = HotSpotchiConfig(
+        config = HotspotchiConfig(
             ssid_mode=SsidMode.SPECIAL,
             special_ssid_index=9999,
         )
@@ -48,7 +48,7 @@ class TestResolveSsid:
 
     def test_custom_mode_without_ssid(self):
         """Custom mode without SSID should fall back to default."""
-        config = HotSpotchiConfig(
+        config = HotspotchiConfig(
             ssid_mode=SsidMode.CUSTOM,
             custom_ssid=None,
         )

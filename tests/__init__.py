@@ -1,1 +1,1 @@
-"""Tests for HotSpotchi."""
+"""Tests for Hotspotchi."""

@@ -1,6 +1,6 @@
 #!/bin/bash
-# HotSpotchi Upgrade Script
-# Upgrades HotSpotchi to the latest version
+# Hotspotchi Upgrade Script
+# Upgrades Hotspotchi to the latest version
 
 set -e
 
@@ -10,7 +10,7 @@ YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
 echo -e "${GREEN}========================================${NC}"
-echo -e "${GREEN}  HotSpotchi Upgrade Script${NC}"
+echo -e "${GREEN}  Hotspotchi Upgrade Script${NC}"
 echo -e "${GREEN}========================================${NC}"
 echo
 
@@ -20,11 +20,11 @@ if [ "$EUID" -ne 0 ]; then
     exit 1
 fi
 
-# Determine the HotSpotchi directory
+# Determine the Hotspotchi directory
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 HOTSPOTCHI_DIR="$(dirname "$SCRIPT_DIR")"
 
-echo -e "${YELLOW}Upgrading HotSpotchi in: ${HOTSPOTCHI_DIR}${NC}"
+echo -e "${YELLOW}Upgrading Hotspotchi in: ${HOTSPOTCHI_DIR}${NC}"
 echo
 
 # Stop services

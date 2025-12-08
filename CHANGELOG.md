@@ -1,4 +1,4 @@
-# HotSpotchi Changelog
+# Hotspotchi Changelog
 
 ## 2.2.9 (2025-12-08)
 
@@ -84,7 +84,7 @@
 - [Feature] Add special SSIDs to random rotation pool - special SSID characters now appear alongside MAC characters in daily_random, random, and cycle modes
 - [Feature] Add `include_special_ssids` config option (default: true) to control special SSID inclusion in rotation
 - [Feature] Add SSID exclusion support - exclude specific special SSIDs from rotation
-- [Fix] Fix `is_running()` to detect system-wide hostapd processes, not just those started by HotSpotchi
+- [Fix] Fix `is_running()` to detect system-wide hostapd processes, not just those started by Hotspotchi
 
 ## 2.0.3 (2025-12-07)
 
@@ -109,7 +109,7 @@
 
 ## 2.0.0 (2025-12-07)
 
-- [Feature] Initial public release of HotSpotchi
+- [Feature] Initial public release of Hotspotchi
 - [Feature] Support for 69 MAC-based Tamagotchi characters
 - [Feature] Support for 21 special SSID characters (Sanrio, events, etc.)
 - [Feature] Multiple rotation modes: daily_random, random, cycle, fixed, disabled

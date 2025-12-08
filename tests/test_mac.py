@@ -176,10 +176,10 @@ class TestIsValidMac:
 
 
 class TestIsHotspotchiMac:
-    """Tests for HotSpotchi MAC detection."""
+    """Tests for Hotspotchi MAC detection."""
 
     def test_recognizes_hotspotchi_mac(self):
-        """Should recognize HotSpotchi-generated MAC."""
+        """Should recognize Hotspotchi-generated MAC."""
         char = Character(0x00, 0x00, "Test")
         mac = create_mac_address(char)
         assert is_hotspotchi_mac(mac)
@@ -193,7 +193,7 @@ class TestIsHotspotchiMac:
         assert is_hotspotchi_mac("02:7a:6d:a0:12:34")
 
     def test_rejects_different_prefix(self):
-        """Should reject non-HotSpotchi MAC."""
+        """Should reject non-Hotspotchi MAC."""
         assert not is_hotspotchi_mac("00:11:22:33:44:55")
 
     def test_mac_prefix_constant(self):

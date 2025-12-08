@@ -1,5 +1,5 @@
 """
-Command-line interface for HotSpotchi.
+Command-line interface for Hotspotchi.
 
 Provides commands to start, stop, and manage the WiFi hotspot,
 list characters, and configure settings.
@@ -11,7 +11,7 @@ import click
 
 from hotspotchi import __version__
 from hotspotchi.characters import CHARACTERS, SPECIAL_SSIDS
-from hotspotchi.config import HotSpotchiConfig, MacMode, SsidMode, load_config
+from hotspotchi.config import HotspotchiConfig, MacMode, SsidMode, load_config
 from hotspotchi.hotspot import HotspotManager, run_hotspot
 from hotspotchi.mac import create_mac_address, format_mac
 from hotspotchi.selection import (
@@ -26,10 +26,10 @@ DEFAULT_CONFIG_PATH = Path("/etc/hotspotchi/config.yaml")
 
 
 @click.group()
-@click.version_option(version=__version__, prog_name="HotSpotchi")
+@click.version_option(version=__version__, prog_name="Hotspotchi")
 @click.pass_context
 def main(ctx: click.Context) -> None:
-    """HotSpotchi - Tamagotchi Uni WiFi Hotspot.
+    """Hotspotchi - Tamagotchi Uni WiFi Hotspot.
 
     Create WiFi access points to meet Tamagotchi characters!
     """
@@ -99,7 +99,7 @@ def start(
         config = load_config(effective_path)
         click.echo(f"Loaded config from {effective_path}")
     else:
-        config = HotSpotchiConfig()
+        config = HotspotchiConfig()
         if config_path:
             click.echo(f"Warning: Config file {config_path} not found, using defaults")
 
@@ -123,7 +123,7 @@ def start(
         overrides["concurrent_mode"] = concurrent
 
     if overrides:
-        config = HotSpotchiConfig(**{**config.model_dump(), **overrides})
+        config = HotspotchiConfig(**{**config.model_dump(), **overrides})
 
     # Show concurrent mode status
     if config.concurrent_mode:
@@ -143,7 +143,7 @@ def status(mac_mode: str | None, character_index: int | None) -> None:
     if DEFAULT_CONFIG_PATH.exists():
         config = load_config(DEFAULT_CONFIG_PATH)
     else:
-        config = HotSpotchiConfig()
+        config = HotspotchiConfig()
 
     # Apply overrides if provided
     overrides: dict[str, object] = {}
@@ -153,12 +153,12 @@ def status(mac_mode: str | None, character_index: int | None) -> None:
         overrides["fixed_character_index"] = character_index
 
     if overrides:
-        config = HotSpotchiConfig(**{**config.model_dump(), **overrides})
+        config = HotspotchiConfig(**{**config.model_dump(), **overrides})
 
     character = select_character(config)
     ssid, special_char = resolve_ssid(config)
 
-    click.echo("HotSpotchi Status")
+    click.echo("Hotspotchi Status")
     click.echo("=" * 40)
     click.echo(f"MAC Mode: {config.mac_mode.value}")
     click.echo(f"SSID Mode: {config.ssid_mode.value}")
@@ -230,17 +230,17 @@ def list_ssids(active: bool) -> None:
         click.echo(f"     Notes: {ssid.notes}")
 
 
-def _load_base_config() -> HotSpotchiConfig:
+def _load_base_config() -> HotspotchiConfig:
     """Load base config from file or use defaults."""
     if DEFAULT_CONFIG_PATH.exists():
         return load_config(DEFAULT_CONFIG_PATH)
-    return HotSpotchiConfig()
+    return HotspotchiConfig()
 
 
-def _config_with_overrides(**overrides: object) -> HotSpotchiConfig:
+def _config_with_overrides(**overrides: object) -> HotspotchiConfig:
     """Load config from file and apply overrides."""
     base = _load_base_config()
-    return HotSpotchiConfig(**{**base.model_dump(), **overrides})
+    return HotspotchiConfig(**{**base.model_dump(), **overrides})
 
 
 @main.command()
@@ -248,7 +248,7 @@ def interactive() -> None:
     """Run interactive character selection menu."""
     while True:
         click.echo("\n" + "=" * 50)
-        click.echo("  HotSpotchi - Interactive Menu")
+        click.echo("  Hotspotchi - Interactive Menu")
         click.echo("=" * 50)
         click.echo("\n[1] List MAC-based characters")
         click.echo("[2] List special SSID characters")
@@ -328,13 +328,13 @@ def check() -> None:
         config = load_config(DEFAULT_CONFIG_PATH)
         click.echo(f"Loaded config from {DEFAULT_CONFIG_PATH}")
     else:
-        config = HotSpotchiConfig()
+        config = HotspotchiConfig()
         click.echo("Using default config (no config file found)")
 
     manager = HotspotManager(config)
 
     click.echo()
-    click.echo("HotSpotchi System Check")
+    click.echo("Hotspotchi System Check")
     click.echo("=" * 40)
 
     # Check root

@@ -1,15 +1,15 @@
 """
-HotSpotchi - Tamagotchi Uni WiFi Hotspot
+Hotspotchi - Tamagotchi Uni WiFi Hotspot
 
 Create WiFi access points with custom MAC addresses and SSIDs
 for meeting characters in Tamagotchi Uni's Tama Search feature.
 """
 
 __version__ = "2.2.9"
-__author__ = "HotSpotchi Contributors"
+__author__ = "Hotspotchi Contributors"
 
 from hotspotchi.characters import CHARACTERS, SPECIAL_SSIDS, Character, SpecialSSID
-from hotspotchi.config import HotSpotchiConfig, MacMode, SsidMode
+from hotspotchi.config import HotspotchiConfig, MacMode, SsidMode
 from hotspotchi.mac import create_mac_address, format_mac
 from hotspotchi.selection import select_character
 from hotspotchi.ssid import resolve_ssid
@@ -23,7 +23,7 @@ __all__ = [
     "CHARACTERS",
     "SPECIAL_SSIDS",
     # Config
-    "HotSpotchiConfig",
+    "HotspotchiConfig",
     "MacMode",
     "SsidMode",
     # Functions

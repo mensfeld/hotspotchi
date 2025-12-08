@@ -10,7 +10,7 @@ readme = "README.md"
 license = "MIT"
 requires-python = ">=3.11"
 authors = [
-    { name = "HotSpotchi Contributors" }
+    { name = "Hotspotchi Contributors" }
 ]
 keywords = ["tamagotchi", "wifi", "raspberry-pi", "hotspot", "tamagotchi-uni"]
 classifiers = [

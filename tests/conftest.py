@@ -5,13 +5,13 @@ from tempfile import TemporaryDirectory
 
 import pytest
 
-from hotspotchi.config import HotSpotchiConfig, MacMode, SsidMode
+from hotspotchi.config import HotspotchiConfig, MacMode, SsidMode
 
 
 @pytest.fixture
-def default_config() -> HotSpotchiConfig:
+def default_config() -> HotspotchiConfig:
     """Provide default configuration for tests."""
-    return HotSpotchiConfig()
+    return HotspotchiConfig()
 
 
 @pytest.fixture
@@ -30,42 +30,42 @@ def temp_cycle_file(temp_dir: Path) -> Path:
 
 
 @pytest.fixture
-def fixed_config() -> HotSpotchiConfig:
+def fixed_config() -> HotspotchiConfig:
     """Configuration for fixed character mode."""
-    return HotSpotchiConfig(
+    return HotspotchiConfig(
         mac_mode=MacMode.FIXED,
         fixed_character_index=5,
     )
 
 
 @pytest.fixture
-def daily_random_config() -> HotSpotchiConfig:
+def daily_random_config() -> HotspotchiConfig:
     """Configuration for daily random mode."""
-    return HotSpotchiConfig(mac_mode=MacMode.DAILY_RANDOM)
+    return HotspotchiConfig(mac_mode=MacMode.DAILY_RANDOM)
 
 
 @pytest.fixture
-def cycle_config(temp_cycle_file: Path) -> HotSpotchiConfig:
+def cycle_config(temp_cycle_file: Path) -> HotspotchiConfig:
     """Configuration for cycle mode with temp file."""
-    return HotSpotchiConfig(
+    return HotspotchiConfig(
         mac_mode=MacMode.CYCLE,
         cycle_file=temp_cycle_file,
     )
 
 
 @pytest.fixture
-def special_ssid_config() -> HotSpotchiConfig:
+def special_ssid_config() -> HotspotchiConfig:
     """Configuration for special SSID mode."""
-    return HotSpotchiConfig(
+    return HotspotchiConfig(
         ssid_mode=SsidMode.SPECIAL,
         special_ssid_index=0,
     )
 
 
 @pytest.fixture
-def custom_ssid_config() -> HotSpotchiConfig:
+def custom_ssid_config() -> HotspotchiConfig:
     """Configuration for custom SSID mode."""
-    return HotSpotchiConfig(
+    return HotspotchiConfig(
         ssid_mode=SsidMode.CUSTOM,
         custom_ssid="MyCustomNetwork",
     )

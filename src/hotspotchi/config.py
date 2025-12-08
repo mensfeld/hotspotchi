@@ -1,5 +1,5 @@
 """
-Configuration management for HotSpotchi.
+Configuration management for Hotspotchi.
 
 Uses Pydantic for validated configuration with sensible defaults
 for Raspberry Pi WiFi hotspot operation.
@@ -40,7 +40,7 @@ class SsidMode(str, Enum):
     """
 
     NORMAL = "normal"
-    """Use the default SSID name (e.g., 'HotSpotchi')."""
+    """Use the default SSID name (e.g., 'Hotspotchi')."""
 
     SPECIAL = "special"
     """Use a special event SSID to trigger exclusive characters."""
@@ -49,8 +49,8 @@ class SsidMode(str, Enum):
     """Use a custom SSID name."""
 
 
-class HotSpotchiConfig(BaseModel):
-    """Main configuration for HotSpotchi.
+class HotspotchiConfig(BaseModel):
+    """Main configuration for Hotspotchi.
 
     All settings have sensible defaults for typical Raspberry Pi use.
     """
@@ -77,7 +77,7 @@ class HotSpotchiConfig(BaseModel):
         description="How to determine the network name",
     )
     default_ssid: str = Field(
-        default="HotSpotchi",
+        default="Hotspotchi",
         description="Default network name for normal mode",
     )
     custom_ssid: str | None = Field(
@@ -188,7 +188,7 @@ class HotSpotchiConfig(BaseModel):
         return self.default_ssid
 
 
-def load_config(config_path: Path | None = None) -> HotSpotchiConfig:
+def load_config(config_path: Path | None = None) -> HotspotchiConfig:
     """Load configuration from file and/or environment.
 
     Args:
@@ -202,12 +202,12 @@ def load_config(config_path: Path | None = None) -> HotSpotchiConfig:
 
         with open(config_path) as f:
             data = yaml.safe_load(f) or {}
-        return HotSpotchiConfig(**data)
+        return HotspotchiConfig(**data)
 
-    return HotSpotchiConfig()
+    return HotspotchiConfig()
 
 
-def save_config(config: HotSpotchiConfig, config_path: Path) -> None:
+def save_config(config: HotspotchiConfig, config_path: Path) -> None:
     """Save configuration to YAML file.
 
     Args:

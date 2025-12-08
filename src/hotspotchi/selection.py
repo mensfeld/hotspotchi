@@ -1,5 +1,5 @@
 """
-Character selection logic for HotSpotchi.
+Character selection logic for Hotspotchi.
 
 Implements all five character selection modes:
 - daily_random: Same random character all day
@@ -18,7 +18,7 @@ from datetime import datetime
 from pathlib import Path
 
 from hotspotchi.characters import CHARACTERS, SPECIAL_SSIDS, Character, SpecialSSID
-from hotspotchi.config import HotSpotchiConfig, MacMode, SsidMode
+from hotspotchi.config import HotspotchiConfig, MacMode, SsidMode
 from hotspotchi.exclusions import get_exclusion_manager
 
 
@@ -135,7 +135,7 @@ def get_cycle_index(cycle_file: Path, total_characters: int) -> int:
 
 
 def select_character(
-    config: HotSpotchiConfig,
+    config: HotspotchiConfig,
     characters: tuple[Character, ...] = CHARACTERS,
     current_date: datetime | None = None,
     respect_exclusions: bool = True,
@@ -206,7 +206,7 @@ def get_active_special_ssids(respect_exclusions: bool = True) -> list[tuple[int,
 
 
 def select_combined(
-    config: HotSpotchiConfig,
+    config: HotspotchiConfig,
     current_date: datetime | None = None,
     respect_exclusions: bool = True,
 ) -> SelectionResult:
@@ -275,7 +275,7 @@ def select_combined(
 
 
 def get_next_character(
-    config: HotSpotchiConfig,
+    config: HotspotchiConfig,
     characters: tuple[Character, ...] = CHARACTERS,
 ) -> Character | None:
     """Preview the next character without advancing state.
@@ -302,7 +302,7 @@ def get_next_character(
 
 
 def get_upcoming_characters(
-    config: HotSpotchiConfig,
+    config: HotspotchiConfig,
     count: int = 7,
     characters: tuple[Character, ...] = CHARACTERS,
 ) -> list[Character]:

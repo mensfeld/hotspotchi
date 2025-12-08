@@ -1,5 +1,5 @@
 """
-Character data for HotSpotchi.
+Character data for Hotspotchi.
 
 Contains all MAC-based characters and special SSID-based event characters
 for Tamagotchi Uni's Tama Search feature.

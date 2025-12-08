@@ -1,5 +1,5 @@
 """
-API routes for HotSpotchi web dashboard.
+API routes for Hotspotchi web dashboard.
 """
 
 import os
@@ -10,7 +10,7 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
 from hotspotchi.characters import CHARACTERS, SPECIAL_SSIDS
-from hotspotchi.config import HotSpotchiConfig, MacMode, SsidMode, load_config
+from hotspotchi.config import HotspotchiConfig, MacMode, SsidMode, load_config
 from hotspotchi.exclusions import get_exclusion_manager
 from hotspotchi.hotspot import HotspotManager
 from hotspotchi.mac import create_mac_address, format_mac
@@ -26,11 +26,11 @@ router = APIRouter()
 DEFAULT_CONFIG_PATH = Path("/etc/hotspotchi/config.yaml")
 
 
-def _load_initial_config() -> HotSpotchiConfig:
+def _load_initial_config() -> HotspotchiConfig:
     """Load config from file or use defaults."""
     if DEFAULT_CONFIG_PATH.exists():
         return load_config(DEFAULT_CONFIG_PATH)
-    return HotSpotchiConfig()
+    return HotspotchiConfig()
 
 
 # Global config and hotspot manager
@@ -392,7 +392,7 @@ async def update_config(update: ConfigUpdate) -> dict:
     if update.custom_ssid is not None:
         config_dict["custom_ssid"] = update.custom_ssid
 
-    _current_config = HotSpotchiConfig(**config_dict)
+    _current_config = HotspotchiConfig(**config_dict)
 
     # Save config to file so changes persist across restarts
     import contextlib
@@ -417,7 +417,7 @@ async def set_character(index: int, apply: bool = False) -> dict:
         raise HTTPException(status_code=400, detail="Invalid character index")
 
     # Update character index and set mode to fixed, reset ssid_mode to normal
-    _current_config = HotSpotchiConfig(
+    _current_config = HotspotchiConfig(
         **{
             **_current_config.model_dump(),
             "mac_mode": MacMode.FIXED,
@@ -460,7 +460,7 @@ async def set_ssid(index: int, apply: bool = False) -> dict:
     if not 0 <= index < len(SPECIAL_SSIDS):
         raise HTTPException(status_code=400, detail="Invalid SSID index")
 
-    _current_config = HotSpotchiConfig(
+    _current_config = HotspotchiConfig(
         **{
             **_current_config.model_dump(),
             "ssid_mode": SsidMode.SPECIAL,

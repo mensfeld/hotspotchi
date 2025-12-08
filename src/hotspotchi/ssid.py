@@ -1,15 +1,15 @@
 """
-SSID resolution logic for HotSpotchi.
+SSID resolution logic for Hotspotchi.
 
 Handles selection of WiFi network names (SSIDs) based on configuration,
 including special event SSIDs that trigger exclusive characters.
 """
 
 from hotspotchi.characters import SPECIAL_SSIDS, SpecialSSID
-from hotspotchi.config import HotSpotchiConfig, SsidMode
+from hotspotchi.config import HotspotchiConfig, SsidMode
 
 
-def resolve_ssid(config: HotSpotchiConfig) -> tuple[str, str | None]:
+def resolve_ssid(config: HotspotchiConfig) -> tuple[str, str | None]:
     """Resolve the SSID to use based on configuration.
 
     Args:

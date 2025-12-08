@@ -1,6 +1,6 @@
-# Contributing to HotSpotchi
+# Contributing to Hotspotchi
 
-Thank you for your interest in contributing to HotSpotchi! This document provides guidelines for contributing.
+Thank you for your interest in contributing to Hotspotchi! This document provides guidelines for contributing.
 
 ## Code of Conduct
 
