@@ -744,3 +744,215 @@ class TestHotspotManagerGetState:
         assert state.ssid == config.default_ssid
         assert state.character_name is None
         assert state.mac_address is None
+
+
+class TestHotspotManagerStartFull:
+    """Tests for full start() method with mocked dependencies."""
+
+    @patch("hotspotchi.hotspot.time.sleep")
+    @patch("subprocess.Popen")
+    @patch("subprocess.run")
+    @patch("shutil.which")
+    @patch("os.geteuid")
+    @patch("hotspotchi.hotspot.select_combined")
+    @patch("hotspotchi.hotspot.Path")
+    def test_start_normal_mode_with_mac_character(
+        self,
+        mock_path: MagicMock,
+        mock_select: MagicMock,
+        mock_geteuid: MagicMock,
+        mock_which: MagicMock,
+        mock_run: MagicMock,
+        mock_popen: MagicMock,
+        _mock_sleep: MagicMock,
+        config: HotspotchiConfig,
+    ):
+        """Should start hotspot with MAC character in normal mode."""
+        from hotspotchi.characters import CHARACTERS
+        from hotspotchi.selection import SelectionResult
+
+        # Setup mocks
+        mock_geteuid.return_value = 0  # Root
+        mock_which.return_value = "/usr/bin/hostapd"
+        mock_run.return_value = MagicMock(returncode=0, stdout="")
+        mock_path.return_value.exists.return_value = True
+        mock_path.return_value.read_text.return_value = "aa:bb:cc:dd:ee:ff\n"
+
+        # Mock select_combined to return a character
+        mock_select.return_value = SelectionResult(
+            character=CHARACTERS[0],
+            special_ssid=None,
+        )
+
+        # Mock Popen for hostapd/dnsmasq
+        mock_process = MagicMock()
+        mock_process.poll.return_value = None  # Process running
+        mock_popen.return_value = mock_process
+
+        manager = HotspotManager(config)
+        state = manager.start()
+
+        assert state.running is True
+        assert state.character_name == CHARACTERS[0].name
+
+    @patch("hotspotchi.hotspot.time.sleep")
+    @patch("subprocess.Popen")
+    @patch("subprocess.run")
+    @patch("shutil.which")
+    @patch("os.geteuid")
+    @patch("hotspotchi.hotspot.select_combined")
+    @patch("hotspotchi.hotspot.Path")
+    def test_start_with_special_ssid(
+        self,
+        mock_path: MagicMock,
+        mock_select: MagicMock,
+        mock_geteuid: MagicMock,
+        mock_which: MagicMock,
+        mock_run: MagicMock,
+        mock_popen: MagicMock,
+        _mock_sleep: MagicMock,
+        config: HotspotchiConfig,
+    ):
+        """Should start hotspot with special SSID."""
+        from hotspotchi.characters import SPECIAL_SSIDS
+        from hotspotchi.selection import SelectionResult
+
+        mock_geteuid.return_value = 0
+        mock_which.return_value = "/usr/bin/hostapd"
+        mock_run.return_value = MagicMock(returncode=0, stdout="")
+        mock_path.return_value.exists.return_value = True
+
+        mock_select.return_value = SelectionResult(
+            character=None,
+            special_ssid=SPECIAL_SSIDS[0],
+        )
+
+        mock_process = MagicMock()
+        mock_process.poll.return_value = None
+        mock_popen.return_value = mock_process
+
+        manager = HotspotManager(config)
+        state = manager.start()
+
+        assert state.running is True
+        assert state.ssid == SPECIAL_SSIDS[0].ssid
+        assert state.character_name == SPECIAL_SSIDS[0].character_name
+
+    @patch("hotspotchi.hotspot.time.sleep")
+    @patch("subprocess.Popen")
+    @patch("subprocess.run")
+    @patch("shutil.which")
+    @patch("os.geteuid")
+    @patch("hotspotchi.hotspot.select_combined")
+    @patch("hotspotchi.hotspot.Path")
+    def test_start_disabled_mode(
+        self,
+        mock_path: MagicMock,
+        mock_select: MagicMock,
+        mock_geteuid: MagicMock,
+        mock_which: MagicMock,
+        mock_run: MagicMock,
+        mock_popen: MagicMock,
+        _mock_sleep: MagicMock,
+        config: HotspotchiConfig,
+    ):
+        """Should start hotspot with no character in disabled mode."""
+        from hotspotchi.selection import SelectionResult
+
+        mock_geteuid.return_value = 0
+        mock_which.return_value = "/usr/bin/hostapd"
+        mock_run.return_value = MagicMock(returncode=0, stdout="")
+        mock_path.return_value.exists.return_value = True
+
+        mock_select.return_value = SelectionResult(
+            character=None,
+            special_ssid=None,
+        )
+
+        mock_process = MagicMock()
+        mock_process.poll.return_value = None
+        mock_popen.return_value = mock_process
+
+        manager = HotspotManager(config)
+        state = manager.start()
+
+        assert state.running is True
+        assert state.ssid == config.default_ssid
+        assert state.character_name is None
+
+    @patch("hotspotchi.hotspot.time.sleep")
+    @patch("subprocess.Popen")
+    @patch("subprocess.run")
+    @patch("shutil.which")
+    @patch("os.geteuid")
+    @patch("hotspotchi.hotspot.select_combined")
+    @patch("hotspotchi.hotspot.Path")
+    def test_start_hostapd_fails(
+        self,
+        mock_path: MagicMock,
+        mock_select: MagicMock,
+        mock_geteuid: MagicMock,
+        mock_which: MagicMock,
+        mock_run: MagicMock,
+        mock_popen: MagicMock,
+        _mock_sleep: MagicMock,
+        config: HotspotchiConfig,
+    ):
+        """Should raise error when hostapd fails to start."""
+        from hotspotchi.selection import SelectionResult
+
+        mock_geteuid.return_value = 0
+        mock_which.return_value = "/usr/bin/hostapd"
+        mock_run.return_value = MagicMock(returncode=0, stdout="")
+        mock_path.return_value.exists.return_value = True
+
+        mock_select.return_value = SelectionResult(
+            character=None,
+            special_ssid=None,
+        )
+
+        # hostapd process that fails immediately
+        mock_process = MagicMock()
+        mock_process.poll.return_value = 1  # Process died
+        mock_process.communicate.return_value = (b"Configuration error", b"")
+        mock_popen.return_value = mock_process
+
+        manager = HotspotManager(config)
+        with pytest.raises(RuntimeError, match="hostapd failed to start"):
+            manager.start()
+
+    @patch("hotspotchi.hotspot.time.sleep")
+    @patch("subprocess.Popen")
+    @patch("subprocess.run")
+    @patch("shutil.which")
+    @patch("os.geteuid")
+    @patch("hotspotchi.hotspot.select_combined")
+    @patch("hotspotchi.hotspot.Path")
+    def test_start_concurrent_mode_interface_failure(
+        self,
+        mock_path: MagicMock,
+        mock_select: MagicMock,
+        mock_geteuid: MagicMock,
+        mock_which: MagicMock,
+        mock_run: MagicMock,
+        _mock_popen: MagicMock,
+        _mock_sleep: MagicMock,
+        concurrent_config: HotspotchiConfig,
+    ):
+        """Should raise error when virtual interface creation fails."""
+        from hotspotchi.selection import SelectionResult
+
+        mock_geteuid.return_value = 0
+        mock_which.return_value = "/usr/bin/hostapd"
+        # Simulate interface creation failure
+        mock_path.return_value.exists.return_value = False
+        mock_run.return_value = MagicMock(returncode=1)
+
+        mock_select.return_value = SelectionResult(
+            character=None,
+            special_ssid=None,
+        )
+
+        manager = HotspotManager(concurrent_config)
+        with pytest.raises(RuntimeError, match="Failed to create virtual interface"):
+            manager.start()

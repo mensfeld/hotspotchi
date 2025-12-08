@@ -7,6 +7,7 @@ from hotspotchi.characters import (
     SPECIAL_SSIDS,
     Character,
     SpecialSSID,
+    _parse_byte,
     get_active_special_ssids,
     get_character_by_bytes,
     get_character_by_name,
@@ -197,3 +198,26 @@ class TestSpecialSSIDDataclass:
             active=False,
         )
         assert ssid.active is False
+
+
+class TestParseByte:
+    """Test _parse_byte function."""
+
+    def test_parse_int(self):
+        """Should return int directly."""
+        assert _parse_byte(42) == 42
+        assert _parse_byte(0) == 0
+        assert _parse_byte(255) == 255
+
+    def test_parse_hex_string(self):
+        """Should parse hex strings like '0x00'."""
+        assert _parse_byte("0x00") == 0
+        assert _parse_byte("0xFF") == 255
+        assert _parse_byte("0x10") == 16
+        assert _parse_byte("0xAB") == 171
+
+    def test_parse_decimal_string(self):
+        """Should parse decimal strings."""
+        assert _parse_byte("42") == 42
+        assert _parse_byte("0") == 0
+        assert _parse_byte("255") == 255
