@@ -35,6 +35,7 @@ Perfect for completionists, rural players without access to many WiFi networks, 
   - `cycle` - Progress through all characters in order
   - `fixed` - Always show a specific character
   - `disabled` - Use device default MAC
+- **Character name in SSID** - WiFi shows "Mametchi Hotspotchi" for easy identification
 - **Web dashboard** - Monitor and control via browser
 - **Raspberry Pi optimized** - Works with hostapd + dnsmasq
 
@@ -150,6 +151,9 @@ mac_mode: daily_random
 
 # Include special SSID characters in random rotation (default: true)
 include_special_ssids: true
+
+# Include character name in SSID (e.g., "Mametchi Hotspotchi") (default: true)
+include_character_in_ssid: true
 
 # For fixed mode - character index (0 = Mametchi)
 fixed_character_index: 0
