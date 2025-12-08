@@ -3,16 +3,19 @@
 from datetime import datetime
 from pathlib import Path
 
-from hotspotchi.characters import CHARACTERS, SPECIAL_SSIDS
+from hotspotchi.characters import CHARACTERS, SPECIAL_SSIDS, Character
 from hotspotchi.config import HotspotchiConfig, MacMode, SsidMode
 from hotspotchi.selection import (
     SelectionResult,
     generate_daily_password,
+    get_available_characters,
+    get_current_season,
     get_cycle_index,
     get_day_number,
     get_next_character,
     get_seconds_until_midnight,
     get_upcoming_characters,
+    is_character_available_now,
     select_character,
     select_combined,
 )
@@ -438,3 +441,211 @@ class TestSelectCombined:
         )
         result_char = select_combined(config_char)
         assert result_char.ssid is None
+
+
+class TestGetCurrentSeason:
+    """Tests for season detection."""
+
+    def test_spring_months(self):
+        """March, April, May should be spring."""
+        assert get_current_season(datetime(2024, 3, 1)) == "spring"
+        assert get_current_season(datetime(2024, 4, 15)) == "spring"
+        assert get_current_season(datetime(2024, 5, 31)) == "spring"
+
+    def test_summer_months(self):
+        """June, July, August should be summer."""
+        assert get_current_season(datetime(2024, 6, 1)) == "summer"
+        assert get_current_season(datetime(2024, 7, 15)) == "summer"
+        assert get_current_season(datetime(2024, 8, 31)) == "summer"
+
+    def test_fall_months(self):
+        """September, October, November should be fall."""
+        assert get_current_season(datetime(2024, 9, 1)) == "fall"
+        assert get_current_season(datetime(2024, 10, 15)) == "fall"
+        assert get_current_season(datetime(2024, 11, 30)) == "fall"
+
+    def test_winter_months(self):
+        """December, January, February should be winter."""
+        assert get_current_season(datetime(2024, 12, 1)) == "winter"
+        assert get_current_season(datetime(2024, 1, 15)) == "winter"
+        assert get_current_season(datetime(2024, 2, 28)) == "winter"
+
+    def test_uses_current_date_when_none(self):
+        """Should use current datetime when no date provided."""
+        result = get_current_season()
+        # Just verify it returns a valid season
+        assert result in ("spring", "summer", "fall", "winter")
+
+
+class TestIsCharacterAvailableNow:
+    """Tests for character availability based on season."""
+
+    def test_non_seasonal_always_available(self):
+        """Characters without season should always be available."""
+        char = Character(byte1=0, byte2=0, name="Test", season=None)
+        assert is_character_available_now(char, datetime(2024, 1, 1)) is True
+        assert is_character_available_now(char, datetime(2024, 4, 1)) is True
+        assert is_character_available_now(char, datetime(2024, 7, 1)) is True
+        assert is_character_available_now(char, datetime(2024, 10, 1)) is True
+
+    def test_spring_character_in_spring(self):
+        """Spring character should be available in spring."""
+        char = Character(byte1=0, byte2=0x0F, name="SpringChar", season="spring")
+        assert is_character_available_now(char, datetime(2024, 3, 15)) is True
+        assert is_character_available_now(char, datetime(2024, 4, 15)) is True
+        assert is_character_available_now(char, datetime(2024, 5, 15)) is True
+
+    def test_spring_character_not_in_other_seasons(self):
+        """Spring character should not be available in other seasons."""
+        char = Character(byte1=0, byte2=0x0F, name="SpringChar", season="spring")
+        assert is_character_available_now(char, datetime(2024, 6, 15)) is False  # Summer
+        assert is_character_available_now(char, datetime(2024, 9, 15)) is False  # Fall
+        assert is_character_available_now(char, datetime(2024, 12, 15)) is False  # Winter
+
+    def test_summer_character_availability(self):
+        """Summer character should only be available in summer."""
+        char = Character(byte1=0, byte2=0x0E, name="SummerChar", season="summer")
+        assert is_character_available_now(char, datetime(2024, 7, 15)) is True
+        assert is_character_available_now(char, datetime(2024, 3, 15)) is False
+
+    def test_fall_character_availability(self):
+        """Fall character should only be available in fall."""
+        char = Character(byte1=0, byte2=0x0D, name="FallChar", season="fall")
+        assert is_character_available_now(char, datetime(2024, 10, 15)) is True
+        assert is_character_available_now(char, datetime(2024, 6, 15)) is False
+
+    def test_winter_character_availability(self):
+        """Winter character should only be available in winter."""
+        char = Character(byte1=0, byte2=0x0C, name="WinterChar", season="winter")
+        assert is_character_available_now(char, datetime(2024, 12, 15)) is True
+        assert is_character_available_now(char, datetime(2024, 1, 15)) is True
+        assert is_character_available_now(char, datetime(2024, 6, 15)) is False
+
+
+class TestGetAvailableCharactersSeasonalFiltering:
+    """Tests for seasonal filtering in get_available_characters."""
+
+    def test_filters_out_wrong_season(self):
+        """Should filter out characters not in current season."""
+        # In December (winter), spring/summer/fall characters should be filtered
+        winter_date = datetime(2024, 12, 15)
+        available = get_available_characters(
+            CHARACTERS,
+            respect_exclusions=False,
+            filter_by_season=True,
+            current_date=winter_date,
+        )
+
+        # Check that no spring/summer/fall characters are in the result
+        for char in available:
+            if char.season is not None:
+                assert char.season == "winter", f"Found {char.season} character {char.name} in winter"
+
+    def test_includes_current_season(self):
+        """Should include characters from current season."""
+        # In spring, spring characters should be available
+        spring_date = datetime(2024, 4, 15)
+        available = get_available_characters(
+            CHARACTERS,
+            respect_exclusions=False,
+            filter_by_season=True,
+            current_date=spring_date,
+        )
+
+        # Find a spring character to verify it's included
+        spring_chars = [c for c in CHARACTERS if c.season == "spring"]
+        for spring_char in spring_chars:
+            assert spring_char in available, f"Spring character {spring_char.name} missing"
+
+    def test_includes_non_seasonal_characters(self):
+        """Non-seasonal characters should always be included."""
+        winter_date = datetime(2024, 12, 15)
+        available = get_available_characters(
+            CHARACTERS,
+            respect_exclusions=False,
+            filter_by_season=True,
+            current_date=winter_date,
+        )
+
+        # All non-seasonal characters should be present
+        non_seasonal = [c for c in CHARACTERS if c.season is None]
+        for char in non_seasonal:
+            assert char in available, f"Non-seasonal character {char.name} missing"
+
+    def test_can_disable_seasonal_filtering(self):
+        """Should be able to disable seasonal filtering."""
+        winter_date = datetime(2024, 12, 15)
+        available = get_available_characters(
+            CHARACTERS,
+            respect_exclusions=False,
+            filter_by_season=False,
+            current_date=winter_date,
+        )
+
+        # With filtering disabled, should have all characters
+        assert len(available) == len(CHARACTERS)
+
+
+class TestSelectCharacterSeasonalFiltering:
+    """Tests for seasonal filtering in select_character."""
+
+    def test_daily_random_respects_season(self):
+        """Daily random should only select seasonally appropriate characters."""
+        config = HotspotchiConfig(mac_mode=MacMode.DAILY_RANDOM)
+
+        # Run selection multiple times with different seeds to verify (December = winter)
+        for day_offset in range(10):
+            test_date = datetime(2024, 12, 15 + day_offset)
+            char = select_character(config, current_date=test_date)
+            assert char is not None
+            if char.season is not None:
+                assert char.season == "winter", f"Got {char.season} character on winter day"
+
+    def test_random_respects_season(self):
+        """Random mode should only select seasonally appropriate characters."""
+        summer_date = datetime(2024, 7, 15)
+        config = HotspotchiConfig(mac_mode=MacMode.RANDOM)
+
+        # Run selection multiple times
+        for _ in range(20):
+            char = select_character(config, current_date=summer_date)
+            assert char is not None
+            if char.season is not None:
+                assert char.season == "summer", f"Got {char.season} character in summer"
+
+    def test_fixed_mode_ignores_season(self):
+        """Fixed mode should allow selecting any character regardless of season."""
+        # Find a spring character index
+        spring_idx = None
+        for i, char in enumerate(CHARACTERS):
+            if char.season == "spring":
+                spring_idx = i
+                break
+
+        if spring_idx is not None:
+            winter_date = datetime(2024, 12, 15)
+            config = HotspotchiConfig(
+                mac_mode=MacMode.FIXED,
+                fixed_character_index=spring_idx,
+            )
+            char = select_character(config, current_date=winter_date)
+            # Fixed mode should return the spring character even in winter
+            assert char is not None
+            assert char.season == "spring"
+
+
+class TestSelectCombinedSeasonalFiltering:
+    """Tests for seasonal filtering in select_combined."""
+
+    def test_combined_respects_season(self):
+        """Combined selection should respect seasonal filtering."""
+        fall_date = datetime(2024, 10, 15)
+        config = HotspotchiConfig(
+            mac_mode=MacMode.RANDOM,
+            include_special_ssids=False,
+        )
+
+        for _ in range(20):
+            result = select_combined(config, current_date=fall_date)
+            if result.character and result.character.season:
+                assert result.character.season == "fall"

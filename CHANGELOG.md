@@ -1,5 +1,18 @@
 # Hotspotchi Changelog
 
+## 2.3.0 (2025-12-08)
+
+- [Feature] Add seasonal character filtering - random/daily_random modes now only select characters available in the current season
+- [Feature] Add `get_current_season()` and `is_character_available_now()` helper functions
+- [Enhancement] Update character database with correct seasonal characters from Tamagotchi Wiki:
+  - Add 11 new v2.1.0 characters (Furawatchi, Chamametchi, Shinshitchi, etc.)
+  - Fix Summer characters: Acchitchi (00:0E), Tokonatchi (01:0E), Tropicatchi (02:0E), Yashiharotchi (03:0E)
+  - Fix Fall characters: Dekotchi (00:0D), Youngdrotchi (01:0D), Witchi (02:0D), Pumpkitchi (03:0D)
+  - Fix Winter characters: Amiamitchi (00:0C), Santaclautchi (01:0C), Akahanatchi (02:0C), Yukipatchi (03:0C)
+- [Enhancement] Update character count from 69 to 80 MAC-based characters
+- [Docs] Update README with correct character names and counts
+- [Maintenance] Add comprehensive tests for seasonal filtering (19 new tests)
+
 ## 2.2.9 (2025-12-08)
 
 - [Fix] Fix MAC-based characters not detected by Tamagotchi - now explicitly sets BSSID in hostapd config

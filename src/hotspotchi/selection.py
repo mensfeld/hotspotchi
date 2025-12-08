@@ -10,6 +10,9 @@ Implements all five character selection modes:
 
 When include_special_ssids is enabled, special SSID characters
 are included in the rotation pool alongside MAC-based characters.
+
+Seasonal characters are automatically filtered based on the current date,
+so only characters available in the current season are selected.
 """
 
 import random
@@ -20,6 +23,56 @@ from pathlib import Path
 from hotspotchi.characters import CHARACTERS, SPECIAL_SSIDS, Character, SpecialSSID
 from hotspotchi.config import HotspotchiConfig, MacMode, SsidMode
 from hotspotchi.exclusions import get_exclusion_manager
+
+
+def get_current_season(date: datetime | None = None) -> str:
+    """Determine the current season based on date.
+
+    Seasons are defined as:
+    - Spring: March-May (months 3-5)
+    - Summer: June-August (months 6-8)
+    - Fall: September-November (months 9-11)
+    - Winter: December-February (months 12, 1-2)
+
+    Args:
+        date: Date to check (defaults to now)
+
+    Returns:
+        Season name: "spring", "summer", "fall", or "winter"
+    """
+    if date is None:
+        date = datetime.now()
+
+    month = date.month
+    if month in (3, 4, 5):
+        return "spring"
+    elif month in (6, 7, 8):
+        return "summer"
+    elif month in (9, 10, 11):
+        return "fall"
+    else:  # 12, 1, 2
+        return "winter"
+
+
+def is_character_available_now(character: Character, date: datetime | None = None) -> bool:
+    """Check if a character is available based on the current season.
+
+    Characters without a season (season=None) are always available.
+    Seasonal characters are only available during their specific season.
+
+    Args:
+        character: The character to check
+        date: Date to check against (defaults to now)
+
+    Returns:
+        True if the character is available now
+    """
+    # Non-seasonal characters are always available
+    if character.season is None:
+        return True
+
+    current_season = get_current_season(date)
+    return character.season == current_season
 
 
 @dataclass
@@ -77,26 +130,37 @@ def get_day_number(date: datetime | None = None) -> int:
 def get_available_characters(
     characters: tuple[Character, ...] = CHARACTERS,
     respect_exclusions: bool = True,
+    filter_by_season: bool = True,
+    current_date: datetime | None = None,
 ) -> tuple[Character, ...]:
     """Get characters that are available for selection.
 
-    Filters out excluded characters if respect_exclusions is True.
+    Filters out:
+    - Excluded characters (if respect_exclusions is True)
+    - Seasonal characters not matching current season (if filter_by_season is True)
 
     Args:
         characters: Full tuple of characters
         respect_exclusions: If True, filter out excluded characters
+        filter_by_season: If True, filter out seasonal characters not available now
+        current_date: Date to use for season check (defaults to now)
 
     Returns:
         Tuple of available characters
     """
-    if not respect_exclusions:
-        return characters
-
     exclusion_manager = get_exclusion_manager()
     available = []
+
     for i, char in enumerate(characters):
-        if not exclusion_manager.is_excluded(i):
-            available.append(char)
+        # Check exclusion
+        if respect_exclusions and exclusion_manager.is_excluded(i):
+            continue
+
+        # Check seasonal availability
+        if filter_by_season and not is_character_available_now(char, current_date):
+            continue
+
+        available.append(char)
 
     return tuple(available) if available else characters  # Fallback to all if all excluded
 
@@ -165,8 +229,8 @@ def select_character(
         index = max(0, index)
         return characters[index]
 
-    # For rotation modes, filter out excluded characters
-    available = get_available_characters(characters, respect_exclusions)
+    # For rotation modes, filter out excluded characters and out-of-season characters
+    available = get_available_characters(characters, respect_exclusions, True, current_date)
     if not available:
         return None
 
@@ -239,8 +303,8 @@ def select_combined(
         char = select_character(config, CHARACTERS, current_date, respect_exclusions)
         return SelectionResult(character=char)
 
-    # Get available MAC characters
-    available_chars = list(get_available_characters(CHARACTERS, respect_exclusions))
+    # Get available MAC characters (filtered by exclusions and season)
+    available_chars = list(get_available_characters(CHARACTERS, respect_exclusions, True, current_date))
 
     # Get active special SSIDs if enabled (respecting exclusions)
     special_ssid_items: list[tuple[int, SpecialSSID]] = []
