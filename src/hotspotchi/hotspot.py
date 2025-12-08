@@ -382,7 +382,7 @@ dhcp-range={self.config.dhcp_range_start},{self.config.dhcp_range_end},{self.con
             # MAC character selected - optionally include character name in SSID
             char_name = selection.name
             if self.config.include_character_in_ssid and char_name:
-                ssid = f"{char_name} Hotspotchi"
+                ssid = f"{char_name}_Hotspotchi"
             else:
                 ssid = self.config.default_ssid
             self._original_mac = self._get_current_mac(ap_interface)
@@ -553,7 +553,7 @@ dhcp-range={self.config.dhcp_range_start},{self.config.dhcp_range_end},{self.con
         elif selection.character:
             char_name = selection.name
             if self.config.include_character_in_ssid and char_name:
-                ssid = f"{char_name} Hotspotchi"
+                ssid = f"{char_name}_Hotspotchi"
             else:
                 ssid = self.config.default_ssid
             mac_address = format_mac(create_mac_address(selection.character))

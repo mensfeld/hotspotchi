@@ -35,7 +35,7 @@ Perfect for completionists, rural players without access to many WiFi networks, 
   - `cycle` - Progress through all characters in order
   - `fixed` - Always show a specific character
   - `disabled` - Use device default MAC
-- **Character name in SSID** - WiFi shows "Mametchi Hotspotchi" for easy identification
+- **Character name in SSID** - WiFi shows "Mametchi_Hotspotchi" for easy identification
 - **Seasonal filtering** - Only selects characters available in the current season
 - **Web dashboard** - Monitor and control via browser
 - **Raspberry Pi optimized** - Works with hostapd + dnsmasq
@@ -45,9 +45,9 @@ Perfect for completionists, rural players without access to many WiFi networks, 
 By default, Hotspotchi includes the current character's name in the WiFi network name:
 
 ```
-Mametchi Hotspotchi
-Kuchipatchi Hotspotchi
-Santaclautchi Hotspotchi
+Mametchi_Hotspotchi
+Kuchipatchi_Hotspotchi
+Santaclautchi_Hotspotchi
 ```
 
 This makes it easy to see which character is currently active when scanning for WiFi networks on any device. The feature can be disabled in the config if you prefer a generic "Hotspotchi" name.
@@ -167,7 +167,7 @@ mac_mode: daily_random
 # Include special SSID characters in random rotation (default: true)
 include_special_ssids: true
 
-# Include character name in SSID (e.g., "Mametchi Hotspotchi") (default: true)
+# Include character name in SSID (e.g., "Mametchi_Hotspotchi") (default: true)
 include_character_in_ssid: true
 
 # For fixed mode - character index (0 = Mametchi)

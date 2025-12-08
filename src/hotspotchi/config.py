@@ -110,7 +110,7 @@ class HotspotchiConfig(BaseModel):
     )
     include_character_in_ssid: bool = Field(
         default=True,
-        description="Include character name in SSID (e.g., 'Mametchi Hotspotchi')",
+        description="Include character name in SSID (e.g., 'Mametchi_Hotspotchi')",
     )
 
     # Security - password prevents unwanted connections

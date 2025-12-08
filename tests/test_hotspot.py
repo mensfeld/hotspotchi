@@ -697,7 +697,7 @@ class TestHotspotManagerGetState:
 
         assert state.running is True
         # Default is include_character_in_ssid=True
-        assert state.ssid == f"{CHARACTERS[0].name} Hotspotchi"
+        assert state.ssid == f"{CHARACTERS[0].name}_Hotspotchi"
         assert state.character_name == CHARACTERS[0].name
         assert state.mac_address is not None
 
@@ -981,7 +981,7 @@ class TestIncludeCharacterInSSID:
         manager = HotspotManager(config)
         state = manager.get_state()
 
-        assert state.ssid == f"{CHARACTERS[0].name} Hotspotchi"
+        assert state.ssid == f"{CHARACTERS[0].name}_Hotspotchi"
 
     @patch("subprocess.run")
     @patch("hotspotchi.hotspot.select_combined")
@@ -1065,7 +1065,7 @@ class TestIncludeCharacterInSSID:
         manager = HotspotManager(config)
         state = manager.start()
 
-        assert state.ssid == f"{CHARACTERS[0].name} Hotspotchi"
+        assert state.ssid == f"{CHARACTERS[0].name}_Hotspotchi"
 
     @patch("hotspotchi.hotspot.time.sleep")
     @patch("subprocess.Popen")

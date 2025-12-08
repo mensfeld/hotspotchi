@@ -183,7 +183,7 @@ async def get_status() -> StatusResponse:
     elif selection.character:
         char_name = selection.character.name
         if config.include_character_in_ssid and char_name:
-            ssid = f"{char_name} Hotspotchi"
+            ssid = f"{char_name}_Hotspotchi"
         else:
             ssid = config.default_ssid
         mac_address = format_mac(create_mac_address(selection.character))
