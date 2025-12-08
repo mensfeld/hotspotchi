@@ -232,6 +232,50 @@ characters:
     byte2: 0x40
     name: Paintotchi
 
+  - byte1: 0x03
+    byte2: 0x50
+    name: Furawatchi
+
+  - byte1: 0x03
+    byte2: 0x60
+    name: Chamametchi
+
+  - byte1: 0x03
+    byte2: 0x70
+    name: Shinshitchi
+
+  - byte1: 0x03
+    byte2: 0x80
+    name: Businosuketchi
+
+  - byte1: 0x03
+    byte2: 0x90
+    name: Marutchi
+
+  - byte1: 0x03
+    byte2: 0xA0
+    name: Orenetchi
+
+  - byte1: 0x03
+    byte2: 0xB0
+    name: Nenetchi
+
+  - byte1: 0x03
+    byte2: 0xC0
+    name: Himespetchi
+
+  - byte1: 0x03
+    byte2: 0xD0
+    name: Himetchi
+
+  - byte1: 0x03
+    byte2: 0xE0
+    name: Kyawatchi
+
+  - byte1: 0x03
+    byte2: 0xF0
+    name: Motetchi
+
   # ----------------------------------------
   # Seasonal characters
   # Set your Tamagotchi's date to the right season!
@@ -260,65 +304,65 @@ characters:
 
   # Summer (June-August)
   - byte1: 0x00
-    byte2: 0x1F
-    name: Soyofuwatchi
+    byte2: 0x0E
+    name: Acchitchi
     season: summer
 
   - byte1: 0x01
-    byte2: 0x1F
-    name: Hyurutchi
+    byte2: 0x0E
+    name: Tokonatchi
     season: summer
 
   - byte1: 0x02
-    byte2: 0x1F
-    name: Kiramotchi
+    byte2: 0x0E
+    name: Tropicatchi
     season: summer
 
   - byte1: 0x03
-    byte2: 0x1F
-    name: Awawatchi
+    byte2: 0x0E
+    name: Yashiharotchi
     season: summer
 
   # Fall (September-November)
   - byte1: 0x00
-    byte2: 0x2F
-    name: Momijitchi
+    byte2: 0x0D
+    name: Dekotchi
     season: fall
 
   - byte1: 0x01
-    byte2: 0x2F
-    name: Chestnut Angel
+    byte2: 0x0D
+    name: Youngdrotchi
     season: fall
 
   - byte1: 0x02
-    byte2: 0x2F
-    name: Ginkgotchi
+    byte2: 0x0D
+    name: Witchi
     season: fall
 
   - byte1: 0x03
-    byte2: 0x2F
-    name: Kinokotchi
+    byte2: 0x0D
+    name: Pumpkitchi
     season: fall
 
   # Winter (December-February)
   - byte1: 0x00
-    byte2: 0x3F
-    name: Yukinkotchi
+    byte2: 0x0C
+    name: Amiamitchi
     season: winter
 
   - byte1: 0x01
-    byte2: 0x3F
-    name: Snowboytchi
+    byte2: 0x0C
+    name: Santaclautchi
     season: winter
 
   - byte1: 0x02
-    byte2: 0x3F
-    name: Fuyukotchi
+    byte2: 0x0C
+    name: Akahanatchi
     season: winter
 
   - byte1: 0x03
-    byte2: 0x3F
-    name: Yuki Onna
+    byte2: 0x0C
+    name: Yukipatchi
     season: winter
 
 

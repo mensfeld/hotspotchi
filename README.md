@@ -16,7 +16,7 @@ The problem? You'd need to physically visit different locations with different W
 
 **Hotspotchi solves this** by turning your Raspberry Pi into a WiFi hotspot that can spoof any MAC address or SSID, letting you:
 
-- Meet all ~90 characters from home without traveling
+- Meet all ~100 characters from home without traveling
 - Access event-exclusive characters (like Sanrio collaborations) that require specific SSIDs
 - Automatically rotate through characters daily, or cycle through the entire collection
 - Track which characters you've encountered via the web dashboard
@@ -27,7 +27,7 @@ Perfect for completionists, rural players without access to many WiFi networks, 
 
 ## Features
 
-- **69 MAC-based characters** - Meet different Tamagotchi characters by changing the WiFi MAC address (includes seasonal characters)
+- **80 MAC-based characters** - Meet different Tamagotchi characters by changing the WiFi MAC address (includes seasonal characters)
 - **21 special SSID characters** - Access event-exclusive characters with special network names
 - **Multiple rotation modes**:
   - `daily_random` - Different character each day, same all day (default)
@@ -44,7 +44,7 @@ The `daily_random` mode uses a date-based seed to select a character. This means
 - **Same character all day** - The same character is selected throughout the entire day
 - **Changes at midnight** - A new character is selected when the date changes
 - **Deterministic** - If you restart the service, you'll get the same character for that day
-- **Pool of ~90** - By default, both MAC-based (69) and special SSID characters (21) are included in the rotation
+- **Pool of ~100** - By default, both MAC-based (80) and special SSID characters (21) are included in the rotation
 
 This design ensures a consistent experience throughout the day while still providing variety over time.
 
@@ -200,9 +200,9 @@ Set your Tamagotchi's date to meet seasonal characters:
 | Season | Months | Characters |
 |--------|--------|------------|
 | Spring | Mar-May | Rosetchi, Yotsubatchi, Hanafuwatchi, Musiharutchi |
-| Summer | Jun-Aug | Soyofuwatchi, Hyurutchi, Kiramotchi, Awawatchi |
-| Fall | Sep-Nov | Momijitchi, Chestnut Angel, Ginkgotchi, Kinokotchi |
-| Winter | Dec-Feb | Yukinkotchi, Snowboytchi, Fuyukotchi, Yuki Onna |
+| Summer | Jun-Aug | Acchitchi, Tokonatchi, Tropicatchi, Yashiharotchi |
+| Fall | Sep-Nov | Dekotchi, Youngdrotchi, Witchi, Pumpkitchi |
+| Winter | Dec-Feb | Amiamitchi, Santaclautchi, Akahanatchi, Yukipatchi |
 
 ## Troubleshooting
 
