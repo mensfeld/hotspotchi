@@ -539,7 +539,9 @@ class TestGetAvailableCharactersSeasonalFiltering:
         # Check that no spring/summer/fall characters are in the result
         for char in available:
             if char.season is not None:
-                assert char.season == "winter", f"Found {char.season} character {char.name} in winter"
+                assert char.season == "winter", (
+                    f"Found {char.season} character {char.name} in winter"
+                )
 
     def test_includes_current_season(self):
         """Should include characters from current season."""

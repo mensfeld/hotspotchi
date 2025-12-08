@@ -304,7 +304,9 @@ def select_combined(
         return SelectionResult(character=char)
 
     # Get available MAC characters (filtered by exclusions and season)
-    available_chars = list(get_available_characters(CHARACTERS, respect_exclusions, True, current_date))
+    available_chars = list(
+        get_available_characters(CHARACTERS, respect_exclusions, True, current_date)
+    )
 
     # Get active special SSIDs if enabled (respecting exclusions)
     special_ssid_items: list[tuple[int, SpecialSSID]] = []
