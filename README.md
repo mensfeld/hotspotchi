@@ -235,21 +235,9 @@ sudo rfkill unblock wifi
 
 ## Updating
 
-To update HotSpotchi to the latest version:
-
 ```bash
 cd ~/hotspotchi
 sudo bash scripts/upgrade.sh
-```
-
-Or manually:
-
-```bash
-cd ~/hotspotchi
-sudo systemctl stop hotspotchi hotspotchi-web
-git pull origin master
-sudo /opt/hotspotchi/venv/bin/pip install -e ".[all]" --upgrade
-sudo systemctl start hotspotchi hotspotchi-web
 ```
 
 ## Uninstallation
