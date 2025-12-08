@@ -36,8 +36,23 @@ Perfect for completionists, rural players without access to many WiFi networks, 
   - `fixed` - Always show a specific character
   - `disabled` - Use device default MAC
 - **Character name in SSID** - WiFi shows "Mametchi Hotspotchi" for easy identification
+- **Seasonal filtering** - Only selects characters available in the current season
 - **Web dashboard** - Monitor and control via browser
 - **Raspberry Pi optimized** - Works with hostapd + dnsmasq
+
+### Network Naming
+
+By default, Hotspotchi includes the current character's name in the WiFi network name:
+
+```
+Mametchi Hotspotchi
+Kuchipatchi Hotspotchi
+Santaclautchi Hotspotchi
+```
+
+This makes it easy to see which character is currently active when scanning for WiFi networks on any device. The feature can be disabled in the config if you prefer a generic "Hotspotchi" name.
+
+**Note:** Special SSID characters (like Sanrio collaborations) are not affected - they require specific network names to work and will use their required SSID instead.
 
 ### How Daily Random Works
 
