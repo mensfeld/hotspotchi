@@ -1,5 +1,9 @@
 # HotSpotchi Changelog
 
+## 2.2.8 (2025-12-08)
+
+- [Fix] Fix daily_random mode not changing character at midnight - service now auto-restarts when day changes
+
 ## 2.2.7 (2025-12-07)
 
 - [Feature] Add upgrade script (`scripts/upgrade.sh`) for easy updates

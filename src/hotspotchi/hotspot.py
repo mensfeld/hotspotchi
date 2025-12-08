@@ -15,9 +15,9 @@ import time
 from dataclasses import dataclass
 from pathlib import Path
 
-from hotspotchi.config import HotSpotchiConfig
+from hotspotchi.config import HotSpotchiConfig, MacMode
 from hotspotchi.mac import create_mac_address, format_mac
-from hotspotchi.selection import generate_daily_password, select_combined
+from hotspotchi.selection import generate_daily_password, get_day_number, select_combined
 
 
 @dataclass
@@ -567,6 +567,8 @@ def run_hotspot(config: HotSpotchiConfig) -> None:
     """Run the hotspot until interrupted.
 
     This is the main entry point for running HotSpotchi as a service.
+    In daily_random mode, automatically restarts at midnight to pick up
+    the new character for the day.
 
     Args:
         config: Configuration to use
@@ -584,6 +586,8 @@ def run_hotspot(config: HotSpotchiConfig) -> None:
 
     try:
         state = manager.start()
+        current_day = get_day_number()
+
         print("HotSpotchi is running!")
         print(f"  SSID: {state.ssid}")
         print(f"  MAC: {state.mac_address or 'default'}")
@@ -592,7 +596,19 @@ def run_hotspot(config: HotSpotchiConfig) -> None:
         print("\nPress Ctrl+C to stop")
 
         while manager.is_running():
-            time.sleep(1)
+            time.sleep(10)  # Check every 10 seconds
+
+            # In daily_random mode, restart at midnight to get new character
+            if config.mac_mode == MacMode.DAILY_RANDOM:
+                new_day = get_day_number()
+                if new_day != current_day:
+                    print("\nMidnight passed - restarting for new daily character...")
+                    manager.stop()
+                    state = manager.start()
+                    current_day = new_day
+                    print(f"  New character: {state.character_name or 'none'}")
+                    print(f"  SSID: {state.ssid}")
+                    print(f"  MAC: {state.mac_address or 'default'}")
 
     except Exception as e:
         print(f"Error: {e}", file=sys.stderr)
