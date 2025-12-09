@@ -264,6 +264,24 @@ sudo rfkill unblock wifi
 
 **Note:** In normal (non-concurrent) mode, Hotspotchi defaults to channel 7 (2.4GHz), so this issue doesn't apply.
 
+## FAQ
+
+### Does this require a Raspberry Pi or can I run it on my desktop?
+
+Hotspotchi can technically run on any Linux machine with a WiFi adapter that supports Access Point (AP) mode, but **Raspberry Pi is strongly recommended** because:
+
+1. **AP mode support** - Many desktop/laptop WiFi cards don't support AP mode. Raspberry Pi's built-in WiFi does.
+2. **Always-on operation** - The Pi can run 24/7 with minimal power consumption. You probably don't want to keep your desktop running just for Tamagotchi.
+3. **Tested platform** - The install scripts and documentation are designed for Raspberry Pi OS.
+4. **Dedicated device** - A Pi can sit near your Tamagotchi play area without tying up your main computer.
+
+If you want to try on a desktop Linux machine, check if your WiFi supports AP mode:
+```bash
+iw list | grep -A 10 "Supported interface modes" | grep "AP"
+```
+
+If "AP" appears in the output, it might work - but you're on your own for setup.
+
 ## Updating
 
 ```bash
