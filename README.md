@@ -236,6 +236,34 @@ journalctl -u hotspotchi -n 50
 sudo rfkill unblock wifi
 ```
 
+### Tamagotchi doesn't see the hotspot (concurrent mode)
+
+**Tamagotchi Uni only supports 2.4GHz WiFi.** In concurrent mode, the hotspot must use the same channel as your home WiFi connection. If your Pi is connected to a 5GHz network, the hotspot will also be on 5GHz and your Tamagotchi won't see it.
+
+**Solutions:**
+
+1. **Connect your Pi to a 2.4GHz network** - Most routers broadcast both bands. Connect to the 2.4GHz one (often has "2.4G" in the name or is on channels 1-14).
+
+2. **Disable 5GHz on the Pi:**
+   ```bash
+   # Create config to prefer 2.4GHz
+   sudo bash -c 'echo "options cfg80211 ieee80211_regdom=US" > /etc/modprobe.d/disable-5ghz.conf'
+
+   # Set regulatory domain
+   sudo iw reg set US
+
+   # Reboot
+   sudo reboot
+   ```
+
+3. **Verify you're on 2.4GHz:**
+   ```bash
+   iw wlan0 info | grep channel
+   # Channels 1-14 = 2.4GHz, channels 36+ = 5GHz
+   ```
+
+**Note:** In normal (non-concurrent) mode, Hotspotchi defaults to channel 7 (2.4GHz), so this issue doesn't apply.
+
 ## Updating
 
 ```bash
