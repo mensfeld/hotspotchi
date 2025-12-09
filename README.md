@@ -266,7 +266,7 @@ sudo rfkill unblock wifi
 
 ## FAQ
 
-### Does this require a Raspberry Pi or can I run it on my desktop?
+### Can I run Hotspotchi on my regular computer instead of a Raspberry Pi?
 
 Hotspotchi can technically run on any Linux machine with a WiFi adapter that supports Access Point (AP) mode, but **Raspberry Pi is strongly recommended** because:
 
