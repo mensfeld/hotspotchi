@@ -1,11 +1,5 @@
 # Hotspotchi Changelog
 
-## 2.4.0 (2025-12-08)
-
-- [Feature] Add character name in SSID - WiFi network now shows "Mametchi Hotspotchi" instead of just "Hotspotchi"
-- [Feature] Add `include_character_in_ssid` config option (default: true) to enable/disable character name in SSID
-- [Note] Special SSID characters are not affected - they keep their required SSID names
-
 ## 2.3.0 (2025-12-08)
 
 - [Feature] Add seasonal character filtering - random/daily_random modes now only select characters available in the current season

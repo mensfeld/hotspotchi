@@ -108,10 +108,6 @@ class HotspotchiConfig(BaseModel):
         default=True,
         description="Include special SSID characters in random/cycle rotation",
     )
-    include_character_in_ssid: bool = Field(
-        default=True,
-        description="Include character name in SSID (e.g., 'Mametchi_Hotspotchi')",
-    )
 
     # Security - password prevents unwanted connections
     # Tamagotchi only needs to detect the SSID, not connect
