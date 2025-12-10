@@ -264,6 +264,8 @@ sudo rfkill unblock wifi
 
 **Note:** In normal (non-concurrent) mode, Hotspotchi defaults to channel 7 (2.4GHz), so this issue doesn't apply.
 
+**Channel 12-14 issue:** Even on 2.4GHz, channels 12-14 may not work. Many devices (especially US-region phones and Tamagotchis) only support channels 1-11. If your router uses channel 12, 13, or 14, configure it to use a lower channel (1-11) or run Hotspotchi in non-concurrent mode which defaults to channel 7.
+
 ## FAQ
 
 ### Can I run Hotspotchi on my regular computer instead of a Raspberry Pi?
