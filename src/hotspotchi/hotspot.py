@@ -166,6 +166,8 @@ class HotspotManager:
         if Path(f"/sys/class/net/{ap_iface}").exists():
             self._run_command(f"ip link set {ap_iface} down")
             self._run_command(f"iw dev {ap_iface} del")
+            # Wait for kernel to fully clean up the interface
+            time.sleep(5)
 
         self._virtual_interface_created = False
 
