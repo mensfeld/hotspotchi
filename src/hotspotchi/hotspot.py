@@ -601,8 +601,19 @@ def run_hotspot(config: HotspotchiConfig) -> None:
         print(f"  IP: {state.ip_address}")
         print("\nPress Ctrl+C to stop")
 
-        while manager.is_running():
+        while True:
             time.sleep(10)  # Check every 10 seconds
+
+            # Check if hotspot is still running, restart if needed
+            if not manager.is_running():
+                print("\nHotspot stopped unexpectedly, restarting...")
+                try:
+                    state = manager.start()
+                    print(f"  Restarted with character: {state.character_name or 'none'}")
+                except Exception as e:
+                    print(f"  Failed to restart: {e}", file=sys.stderr)
+                    time.sleep(30)  # Wait before retrying
+                continue
 
             # In daily_random mode, restart at midnight to get new character
             if config.mac_mode == MacMode.DAILY_RANDOM:
@@ -610,11 +621,22 @@ def run_hotspot(config: HotspotchiConfig) -> None:
                 if new_day != current_day:
                     print("\nMidnight passed - restarting for new daily character...")
                     manager.stop()
-                    state = manager.start()
-                    current_day = new_day
-                    print(f"  New character: {state.character_name or 'none'}")
-                    print(f"  SSID: {state.ssid}")
-                    print(f"  MAC: {state.mac_address or 'default'}")
+                    # Retry start up to 3 times
+                    for attempt in range(3):
+                        try:
+                            state = manager.start()
+                            current_day = new_day
+                            print(f"  New character: {state.character_name or 'none'}")
+                            print(f"  SSID: {state.ssid}")
+                            print(f"  MAC: {state.mac_address or 'default'}")
+                            break
+                        except Exception as e:
+                            print(f"  Restart attempt {attempt + 1} failed: {e}", file=sys.stderr)
+                            if attempt < 2:
+                                print("  Retrying in 10 seconds...")
+                                time.sleep(10)
+                            else:
+                                print("  All restart attempts failed, will retry on next loop")
 
     except Exception as e:
         print(f"Error: {e}", file=sys.stderr)
