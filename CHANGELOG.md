@@ -1,5 +1,12 @@
 # Hotspotchi Changelog
 
+## 2.3.1 (2025-12-15)
+
+- [Fix] Fix concurrent mode daily rotation restart failing silently - add 5 second delay after removing virtual interface for kernel cleanup
+- [Fix] Fix service crashing on midnight restart failure - now retries up to 3 times with 10s delays
+- [Feature] Add auto-recovery if hotspot stops unexpectedly - service now monitors hostapd and auto-restarts within 10 seconds
+- [Enhancement] Service main loop now runs indefinitely (`while True`) instead of exiting when `is_running()` returns False
+
 ## 2.3.0 (2025-12-08)
 
 - [Feature] Add seasonal character filtering - random/daily_random modes now only select characters available in the current season

@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "hotspotchi"
-version = "2.3.0"
+version = "2.3.1"
 description = "Tamagotchi Uni WiFi hotspot for meeting characters via Tama Search"
 readme = "README.md"
 license = "MIT"
