@@ -5,42 +5,62 @@
     ":dependencyDashboard",
     ":semanticCommits"
   ],
-  "labels": ["dependencies"],
-  "stabilityDays": 7,
+  "labels": [
+    "dependencies"
+  ],
+  "minimumReleaseAge": "7 days",
   "prCreation": "not-pending",
   "timezone": "UTC",
-  "schedule": ["before 6am on monday"],
+  "schedule": [
+    "before 6am on monday"
+  ],
   "packageRules": [
     {
       "description": "Python dependencies - 7 day stability",
-      "matchManagers": ["pip_requirements", "pip-compile", "pep621"],
+      "matchManagers": [
+        "pip_requirements",
+        "pip-compile",
+        "pep621"
+      ],
       "groupName": "python dependencies",
-      "stabilityDays": 7
+      "minimumReleaseAge": "7 days"
     },
     {
       "description": "GitHub Actions - faster updates",
-      "matchManagers": ["github-actions"],
+      "matchManagers": [
+        "github-actions"
+      ],
       "groupName": "github actions",
       "automerge": true,
       "automergeType": "pr",
-      "stabilityDays": 3
+      "minimumReleaseAge": "3 days"
     },
     {
       "description": "Development dependencies - can automerge",
-      "matchDepTypes": ["devDependencies"],
+      "matchDepTypes": [
+        "devDependencies"
+      ],
       "automerge": true,
       "automergeType": "pr"
     },
     {
       "description": "Major version updates need review",
-      "matchUpdateTypes": ["major"],
-      "labels": ["dependencies", "major"],
+      "matchUpdateTypes": [
+        "major"
+      ],
+      "labels": [
+        "dependencies",
+        "major"
+      ],
       "automerge": false,
-      "stabilityDays": 14
+      "minimumReleaseAge": "14 days"
     },
     {
       "description": "Trusted packages can automerge minor/patch",
-      "matchUpdateTypes": ["minor", "patch"],
+      "matchUpdateTypes": [
+        "minor",
+        "patch"
+      ],
       "matchPackageNames": [
         "pytest",
         "pytest-cov",
@@ -58,16 +78,24 @@
     },
     {
       "description": "Security updates bypass stability days",
-      "matchUpdateTypes": ["patch"],
-      "matchPackagePatterns": ["*"],
+      "matchUpdateTypes": [
+        "patch"
+      ],
       "vulnerabilityAlerts": {
-        "labels": ["security"],
-        "stabilityDays": 0
-      }
+        "labels": [
+          "security"
+        ],
+        "minimumReleaseAge": null
+      },
+      "matchPackageNames": [
+        "*"
+      ]
     }
   ],
   "vulnerabilityAlerts": {
     "enabled": true,
-    "labels": ["security"]
+    "labels": [
+      "security"
+    ]
   }
 }
