@@ -1,5 +1,9 @@
 # Hotspotchi Changelog
 
+## 2.3.2 (2026-01-20)
+
+- [Feature] Add ShisaPatchi special SSID character from San-A Urasoe West Coast PARCO CITY store in Urasoe, Okinawa
+
 ## 2.3.1 (2025-12-15)
 
 - [Fix] Fix concurrent mode daily rotation restart failing silently - add 5 second delay after removing virtual interface for kernel cleanup

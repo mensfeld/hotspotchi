@@ -469,3 +469,7 @@ special_ssids:
     character_name: M Hello Kitty
     notes: Sanrio Puroland - INACTIVE as of v2.1.0
     active: false
+
+  - ssid: Xd3jj6F7UYaV4mwMoEUR0HTf9xMLWHVm
+    character_name: ShisaPatchi
+    notes: San-A Urasoe West Coast PARCO CITY store in Urasoe, Okinawa
