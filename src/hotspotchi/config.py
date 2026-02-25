@@ -5,13 +5,13 @@ Uses Pydantic for validated configuration with sensible defaults
 for Raspberry Pi WiFi hotspot operation.
 """
 
-from enum import Enum
+from enum import StrEnum
 from pathlib import Path
 
 from pydantic import BaseModel, Field, field_validator
 
 
-class MacMode(str, Enum):
+class MacMode(StrEnum):
     """MAC address rotation mode.
 
     Determines how the MAC address (and thus character) is selected.
@@ -33,7 +33,7 @@ class MacMode(str, Enum):
     """Don't change MAC address, use device default."""
 
 
-class SsidMode(str, Enum):
+class SsidMode(StrEnum):
     """SSID selection mode.
 
     Determines how the WiFi network name is set.
