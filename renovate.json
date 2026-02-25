@@ -10,10 +10,6 @@
   ],
   "minimumReleaseAge": "7 days",
   "prCreation": "not-pending",
-  "timezone": "UTC",
-  "schedule": [
-    "before 6am on monday"
-  ],
   "packageRules": [
     {
       "description": "Python dependencies - 7 day stability",
@@ -31,17 +27,13 @@
         "github-actions"
       ],
       "groupName": "github actions",
-      "automerge": true,
-      "automergeType": "pr",
       "minimumReleaseAge": "3 days"
     },
     {
       "description": "Development dependencies - can automerge",
       "matchDepTypes": [
         "devDependencies"
-      ],
-      "automerge": true,
-      "automergeType": "pr"
+      ]
     },
     {
       "description": "Major version updates need review",
@@ -52,7 +44,6 @@
         "dependencies",
         "major"
       ],
-      "automerge": false,
       "minimumReleaseAge": "14 days"
     },
     {
@@ -72,9 +63,7 @@
         "pydantic",
         "click",
         "httpx"
-      ],
-      "automerge": true,
-      "automergeType": "pr"
+      ]
     },
     {
       "description": "Security updates bypass stability days",
