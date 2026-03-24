@@ -223,6 +223,25 @@ Set your Tamagotchi's date to meet seasonal characters:
 
 3. **Use a second WiFi adapter** - Add a USB WiFi adapter for your home network
 
+### Installation fails on low-memory Pi models (Zero W2, etc.)
+
+If the installation hangs or fails during compilation on a Raspberry Pi with limited RAM (e.g., Zero W2 with 512MB), you may need to increase the swap size. The `uvloop` dependency requires extra memory to compile.
+
+```bash
+# Increase swap from the default 100MB to 512MB
+sudo dphys-swapfile swapoff
+sudo sed -i 's/CONF_SWAPSIZE=100/CONF_SWAPSIZE=512/' /etc/dphys-swapfile
+sudo dphys-swapfile setup
+sudo dphys-swapfile swapon
+
+# Now run the installer
+sudo bash scripts/install.sh
+
+# Optionally revert swap size after installation
+sudo sed -i 's/CONF_SWAPSIZE=512/CONF_SWAPSIZE=100/' /etc/dphys-swapfile
+sudo dphys-swapfile setup
+```
+
 ### WiFi not appearing
 
 ```bash

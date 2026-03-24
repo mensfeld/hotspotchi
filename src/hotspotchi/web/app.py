@@ -43,8 +43,9 @@ app.include_router(router, prefix="/api")
 async def dashboard(request: Request) -> HTMLResponse:
     """Render the main dashboard page."""
     return templates.TemplateResponse(
-        "index.html",
-        {
+        request=request,
+        name="index.html",
+        context={
             "request": request,
             "version": __version__,
         },
