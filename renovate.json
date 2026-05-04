@@ -94,5 +94,8 @@
     "labels": [
       "security"
     ]
+  },
+  "lockFileMaintenance": {
+    "enabled": true
   }
 }
