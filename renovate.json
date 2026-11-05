@@ -79,6 +79,13 @@
       "matchPackageNames": [
         "*"
       ]
+    },
+    {
+      "description": "Major updates stay manual",
+      "matchUpdateTypes": [
+        "major"
+      ],
+      "automerge": false
     }
   ],
   "vulnerabilityAlerts": {
@@ -92,5 +99,7 @@
     "schedule": [
       "before 4am on the first day of the month"
     ]
-  }
+  },
+  "automerge": true,
+  "platformAutomerge": true
 }
